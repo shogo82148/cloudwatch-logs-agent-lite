@@ -111,7 +111,7 @@ func (w *Writer) WriteEvent(now time.Time, message string) (int, error) {
 	}
 	w.events = append(w.events, cloudwatchlogs.InputLogEvent{
 		Message:   aws.String(message),
-		Timestamp: aws.Int64(now.Unix()*1000 + int64(now.Nanosecond()/1000)),
+		Timestamp: aws.Int64(now.Unix()*1000 + int64(now.Nanosecond()/1000000)),
 	})
 	return len(message), nil
 }
@@ -132,6 +132,14 @@ func (w *Writer) Flush() error {
 		case "ResourceNotFoundException":
 			// Maybe our log stream doesn't exist yet.
 			if err := w.createStream(ctx, true); err != nil {
+				return err
+			}
+			return w.putEvents(ctx, events)
+		case "DataAlreadyAcceptedException":
+			// This batch was already sent
+			return nil
+		case "InvalidSequenceTokenException":
+			if err := w.getNextSequenceToken(ctx); err != nil {
 				return err
 			}
 			return w.putEvents(ctx, events)
@@ -206,6 +214,24 @@ func (w *Writer) createGroup(ctx context.Context) error {
 		}
 	}
 	return err
+}
+
+func (w *Writer) getNextSequenceToken(ctx context.Context) error {
+	if w.logs == nil {
+		w.logs = cloudwatchlogs.New(w.Config)
+	}
+	req := w.logs.DescribeLogStreamsRequest(&cloudwatchlogs.DescribeLogStreamsInput{
+		LogGroupName:        &w.LogGroupName,
+		LogStreamNamePrefix: &w.LogStreamName,
+		Limit:               aws.Int64(1),
+	})
+	req.SetContext(ctx)
+	resp, err := req.Send()
+	if err != nil {
+		return err
+	}
+	w.nextSequenceToken = resp.LogStreams[0].UploadSequenceToken
+	return nil
 }
 
 // Close closes the Writer.

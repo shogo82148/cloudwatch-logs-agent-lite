@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/aws/awserr"
 	"github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs"
 	"github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs/cloudwatchlogsiface"
 )
@@ -119,7 +120,24 @@ func (w *Writer) WriteEvent(now time.Time, message string) (int, error) {
 func (w *Writer) Flush() error {
 	events := w.events
 	w.events = nil
-	return w.putEvents(context.Background(), events)
+	if len(events) == 0 {
+		return nil
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	err := w.putEvents(context.Background(), events)
+	if err, ok := err.(awserr.Error); ok {
+		switch err.Code() {
+		case "ResourceNotFoundException":
+			// Maybe our log stream doesn't exist yet.
+			if err := w.createStream(ctx, true); err != nil {
+				return err
+			}
+			return w.putEvents(ctx, events)
+		}
+	}
+	return err
 }
 
 func (w *Writer) putEvents(ctx context.Context, events []cloudwatchlogs.InputLogEvent) error {
@@ -140,6 +158,54 @@ func (w *Writer) putEvents(ctx context.Context, events []cloudwatchlogs.InputLog
 	}
 	w.nextSequenceToken = resp.NextSequenceToken
 	return nil
+}
+
+func (w *Writer) createStream(ctx context.Context, tryToCreateGroup bool) error {
+	if w.logs == nil {
+		w.logs = cloudwatchlogs.New(w.Config)
+	}
+	req := w.logs.CreateLogStreamRequest(&cloudwatchlogs.CreateLogStreamInput{
+		LogGroupName:  &w.LogGroupName,
+		LogStreamName: &w.LogStreamName,
+	})
+	req.SetContext(ctx)
+	_, err := req.Send()
+	if err, ok := err.(awserr.Error); ok {
+		switch err.Code() {
+		case "ResourceAlreadyExistsException":
+			// alread created, just ignore
+			return nil
+		case "ResourceNotFoundException":
+			// Maybe our log group doesn't exist yet.
+			if !tryToCreateGroup {
+				return err
+			}
+			if err := w.createGroup(ctx); err != nil {
+				return err
+			}
+			return w.createStream(ctx, false)
+		}
+	}
+	return err
+}
+
+func (w *Writer) createGroup(ctx context.Context) error {
+	if w.logs == nil {
+		w.logs = cloudwatchlogs.New(w.Config)
+	}
+	req := w.logs.CreateLogGroupRequest(&cloudwatchlogs.CreateLogGroupInput{
+		LogGroupName: &w.LogGroupName,
+	})
+	req.SetContext(ctx)
+	_, err := req.Send()
+	if err, ok := err.(awserr.Error); ok {
+		switch err.Code() {
+		case "ResourceAlreadyExistsException":
+			// alread created, just ignore
+			return nil
+		}
+	}
+	return err
 }
 
 // Close closes the Writer.

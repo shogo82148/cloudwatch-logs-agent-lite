@@ -58,15 +58,24 @@ func main() {
 		syscall.SIGTERM,
 		syscall.SIGQUIT,
 	)
+	var chshutdown chan error
 	for {
 		select {
 		case s := <-chsig:
-			log.Printf("received signal %s, shutting down...", s)
-			go func() {
-				if err := a.Close(); err != nil {
-					log.Fatal("fail to close: ", err)
-				}
-			}()
+			if chshutdown == nil {
+				log.Printf("received signal %s, shutting down...", s)
+				chshutdown = make(chan error, 1)
+				go func() {
+					chshutdown <- a.Close()
+				}()
+			} else {
+				log.Fatalf("received signal %s, force to close", s)
+			}
+		case err := <-chshutdown:
+			if err != nil {
+				log.Fatal("fail to close: ", err)
+			}
+			return
 		}
 	}
 }

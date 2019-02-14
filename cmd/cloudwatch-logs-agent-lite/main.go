@@ -21,8 +21,10 @@ import (
 
 func main() {
 	var groupName, streamName string
+	var interval time.Duration
 	flag.StringVar(&groupName, "log-group-name", "", "log group name")
 	flag.StringVar(&streamName, "log-stream-name", "", "log stream name")
+	flag.DurationVar(&interval, "flush-interval", time.Second, "flush interval to flush the logs")
 	flag.Parse()
 
 	if groupName == "" {
@@ -43,7 +45,8 @@ func main() {
 			LogGroupName:  groupName,
 			LogStreamName: streamName,
 		},
-		Files: flag.Args(),
+		Files:         flag.Args(),
+		FlushInterval: interval,
 	}
 	if err := a.Start(); err != nil {
 		log.Fatal("fail to start: ", err)

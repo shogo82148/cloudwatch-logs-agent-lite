@@ -5,6 +5,7 @@ import (
 	"os"
 	"strings"
 	"sync"
+	"time"
 
 	tail "github.com/shogo82148/go-tail"
 )
@@ -12,7 +13,15 @@ import (
 // Agent is a CloudWatch Logs Agent Lite.
 type Agent struct {
 	*Writer
+
+	// Files are target file names for tailing.
+	// If the length of Files is zero, the standard input is used.
 	Files []string
+
+	// FlushInterval specifies the flush interval
+	// to flush to the logs.
+	// If zero, no periodic flushing is done.
+	FlushInterval time.Duration
 
 	wg     sync.WaitGroup
 	tails  []*tail.Tail
@@ -27,7 +36,11 @@ type Agent struct {
 func (a *Agent) Start() error {
 	a.lines = make(chan *tail.Line, 16)
 	a.errors = make(chan error, 1)
-	for _, f := range a.Files {
+	files := a.Files
+	if len(files) == 0 {
+		files = []string{"-"}
+	}
+	for _, f := range files {
 		var t *tail.Tail
 		var err error
 		if f == "-" {
@@ -90,6 +103,13 @@ func (a *Agent) runTail(t *tail.Tail) {
 
 func (a *Agent) runFoward() {
 	defer a.wg.Done()
+
+	var flush <-chan time.Time
+	if a.FlushInterval > 0 {
+		ticker := time.NewTicker(a.FlushInterval)
+		defer ticker.Stop()
+		flush = ticker.C
+	}
 	for {
 		select {
 		case line, ok := <-a.lines:
@@ -103,6 +123,11 @@ func (a *Agent) runFoward() {
 			}
 		case err, ok := <-a.errors:
 			if ok {
+				log.Println("Error: ", err)
+			}
+		case <-flush:
+			err := a.Flush()
+			if err != nil {
 				log.Println("Error: ", err)
 			}
 		}

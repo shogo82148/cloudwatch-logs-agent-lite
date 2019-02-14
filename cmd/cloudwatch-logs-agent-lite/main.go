@@ -97,9 +97,13 @@ func getAWSInstanceID() string {
 		return ""
 	}
 	req = req.WithContext(ctx)
-	defer req.Body.Close()
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return ""
+	}
+	defer resp.Body.Close()
 	var builder strings.Builder
-	if _, err := io.Copy(&builder, req.Body); err != nil {
+	if _, err := io.Copy(&builder, resp.Body); err != nil {
 		return ""
 	}
 	return strings.TrimSpace(builder.String())

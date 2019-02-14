@@ -18,6 +18,9 @@ type Agent struct {
 	tails  []*tail.Tail
 	lines  chan *tail.Line
 	errors chan error
+
+	closeOnce sync.Once
+	closeErr  error
 }
 
 // Start starts log fowarding.
@@ -49,18 +52,21 @@ func (a *Agent) Start() error {
 
 // Close stops log fowarding.
 func (a *Agent) Close() error {
-	var ferr error
-	for _, t := range a.tails {
-		err := t.Close()
-		if err != nil && ferr == nil {
+	a.closeOnce.Do(func() {
+		var ferr error
+		for _, t := range a.tails {
+			err := t.Close()
+			if err != nil && ferr == nil {
+				ferr = err
+			}
+		}
+		if err := a.Writer.Close(); err != nil && ferr == nil {
 			ferr = err
 		}
-	}
-	if err := a.Writer.Close(); err != nil && ferr == nil {
-		ferr = err
-	}
-	a.wg.Wait()
-	return ferr
+		a.closeErr = ferr
+		a.wg.Wait()
+	})
+	return a.closeErr
 }
 
 func (a *Agent) runTail(t *tail.Tail) {

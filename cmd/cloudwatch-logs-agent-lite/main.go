@@ -22,11 +22,17 @@ import (
 func main() {
 	var groupName, streamName string
 	var interval time.Duration
+	var version bool
 	flag.StringVar(&groupName, "log-group-name", "", "log group name")
 	flag.StringVar(&streamName, "log-stream-name", "", "log stream name")
 	flag.DurationVar(&interval, "flush-interval", time.Second, "flush interval to flush the logs")
+	flag.BoolVar(&version, "version", false, "show the version")
 	flag.Parse()
 
+	if version {
+		fmt.Printf("cloudwatch-logs-agent-lite v%s\n", agent.Version)
+		return
+	}
 	if groupName == "" {
 		log.Fatal("-log-group-name is required.")
 	}

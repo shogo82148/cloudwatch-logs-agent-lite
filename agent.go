@@ -32,7 +32,7 @@ type Agent struct {
 	closeErr  error
 }
 
-// Start starts log fowarding.
+// Start starts log forwarding.
 func (a *Agent) Start() error {
 	a.lines = make(chan *tail.Line, 16)
 	a.errors = make(chan error, 1)
@@ -59,11 +59,11 @@ func (a *Agent) Start() error {
 		a.tails = append(a.tails, t)
 	}
 	a.wg.Add(1)
-	go a.runFoward()
+	go a.runForward()
 	return nil
 }
 
-// Close stops log fowarding.
+// Close stops log forwarding.
 func (a *Agent) Close() error {
 	a.closeOnce.Do(func() {
 		var ferr error
@@ -101,7 +101,7 @@ func (a *Agent) runTail(t *tail.Tail) {
 	}
 }
 
-func (a *Agent) runFoward() {
+func (a *Agent) runForward() {
 	defer a.wg.Done()
 
 	var flush <-chan time.Time

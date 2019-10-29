@@ -5,3 +5,5 @@ require (
 	github.com/shogo82148/go-tail v0.0.1
 	github.com/stretchr/testify v1.3.0 // indirect
 )
+
+go 1.13

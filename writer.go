@@ -18,7 +18,7 @@ type Writer struct {
 	LogGroupName  string
 	LogStreamName string
 
-	logs              cloudwatchlogsiface.CloudWatchLogsAPI
+	logs              cloudwatchlogsiface.ClientAPI
 	nextSequenceToken *string
 	remain            string
 	events            []cloudwatchlogs.InputLogEvent
@@ -158,8 +158,7 @@ func (w *Writer) putEvents(ctx context.Context, events []cloudwatchlogs.InputLog
 		LogStreamName: &w.LogStreamName,
 		SequenceToken: w.nextSequenceToken,
 	})
-	req.SetContext(ctx)
-	resp, err := req.Send()
+	resp, err := req.Send(ctx)
 	if err != nil {
 		w.nextSequenceToken = nil
 		return err
@@ -176,12 +175,11 @@ func (w *Writer) createStream(ctx context.Context, tryToCreateGroup bool) error 
 		LogGroupName:  &w.LogGroupName,
 		LogStreamName: &w.LogStreamName,
 	})
-	req.SetContext(ctx)
-	_, err := req.Send()
+	_, err := req.Send(ctx)
 	if err, ok := err.(awserr.Error); ok {
 		switch err.Code() {
 		case "ResourceAlreadyExistsException":
-			// alread created, just ignore
+			// already created, just ignore
 			return nil
 		case "ResourceNotFoundException":
 			// Maybe our log group doesn't exist yet.
@@ -204,12 +202,11 @@ func (w *Writer) createGroup(ctx context.Context) error {
 	req := w.logs.CreateLogGroupRequest(&cloudwatchlogs.CreateLogGroupInput{
 		LogGroupName: &w.LogGroupName,
 	})
-	req.SetContext(ctx)
-	_, err := req.Send()
+	_, err := req.Send(ctx)
 	if err, ok := err.(awserr.Error); ok {
 		switch err.Code() {
 		case "ResourceAlreadyExistsException":
-			// alread created, just ignore
+			// already created, just ignore
 			return nil
 		}
 	}
@@ -225,8 +222,7 @@ func (w *Writer) getNextSequenceToken(ctx context.Context) error {
 		LogStreamNamePrefix: &w.LogStreamName,
 		Limit:               aws.Int64(1),
 	})
-	req.SetContext(ctx)
-	resp, err := req.Send()
+	resp, err := req.Send(ctx)
 	if err != nil {
 		return err
 	}

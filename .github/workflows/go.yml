@@ -10,7 +10,6 @@ jobs:
         os:
         - ubuntu-latest
         - macOS-latest
-        - windows-latest
         go:
         - '1.13'
 

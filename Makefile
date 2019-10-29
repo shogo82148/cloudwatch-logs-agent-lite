@@ -31,7 +31,7 @@ $(ARTIFACTS_DIR)/cloudwatch-logs-agent-lite_$(GOOS)_$(GOARCH):
 
 $(ARTIFACTS_DIR)/cloudwatch-logs-agent-lite_$(GOOS)_$(GOARCH)/cloudwatch-logs-agent-lite$(SUFFIX): $(ARTIFACTS_DIR)/cloudwatch-logs-agent-lite_$(GOOS)_$(GOARCH) $(SRC_FILES)
 	@echo " * Building binary for $(GOOS)/$(GOARCH)..."
-	@CGO_ENABLED=0 go build -o $@ ./cmd/cloudwatch-logs-agent-lite
+	@CGO_ENABLED=0 ./run-in-docker.sh go build -o $@ ./cmd/cloudwatch-logs-agent-lite
 
 build: $(ARTIFACTS_DIR)/cloudwatch-logs-agent-lite_$(GOOS)_$(GOARCH)/cloudwatch-logs-agent-lite$(SUFFIX)
 

@@ -131,16 +131,16 @@ func (w *Writer) Flush() error {
 	var awsErr awserr.Error
 	if errors.As(err, &awsErr) {
 		switch awsErr.Code() {
-		case "ResourceNotFoundException":
+		case cloudwatchlogs.ErrCodeResourceNotFoundException:
 			// Maybe our log stream doesn't exist yet.
 			if err := w.createStream(ctx, true); err != nil {
 				return err
 			}
 			return w.putEvents(ctx, events)
-		case "DataAlreadyAcceptedException":
+		case cloudwatchlogs.ErrCodeDataAlreadyAcceptedException:
 			// This batch was already sent
 			return nil
-		case "InvalidSequenceTokenException":
+		case cloudwatchlogs.ErrCodeInvalidSequenceTokenException:
 			if err := w.getNextSequenceToken(ctx); err != nil {
 				return err
 			}
@@ -181,10 +181,10 @@ func (w *Writer) createStream(ctx context.Context, tryToCreateGroup bool) error 
 	var awsErr awserr.Error
 	if errors.As(err, &awsErr) {
 		switch awsErr.Code() {
-		case "ResourceAlreadyExistsException":
+		case cloudwatchlogs.ErrCodeResourceAlreadyExistsException:
 			// already created, just ignore
 			return nil
-		case "ResourceNotFoundException":
+		case cloudwatchlogs.ErrCodeResourceNotFoundException:
 			// Maybe our log group doesn't exist yet.
 			if !tryToCreateGroup {
 				return err
@@ -209,7 +209,7 @@ func (w *Writer) createGroup(ctx context.Context) error {
 	var awsErr awserr.Error
 	if errors.As(err, &awsErr) {
 		switch awsErr.Code() {
-		case "ResourceAlreadyExistsException":
+		case cloudwatchlogs.ErrCodeResourceAlreadyExistsException:
 			// already created, just ignore
 			return nil
 		}

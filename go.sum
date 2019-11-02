@@ -16,6 +16,8 @@ github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZb
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/shogo82148/go-tail v0.0.2 h1:l/WiOIJYfcewc6/HisvEKV24ec7Z3M7wmBuBDKM2noU=
 github.com/shogo82148/go-tail v0.0.2/go.mod h1:y96I6vs80xyEur05XIx1T73Sd52du6palkY+bl7trrQ=
+github.com/shogo82148/go-tail v0.0.3 h1:3bQHYMNdkvy4S0GMjpABoW5/aRN68IKt+f4FVCqL6WE=
+github.com/shogo82148/go-tail v0.0.3/go.mod h1:y96I6vs80xyEur05XIx1T73Sd52du6palkY+bl7trrQ=
 github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
 github.com/stretchr/testify v1.2.2/go.mod h1:a8OnRcib4nhh0OaRAV+Yts87kKdq0PP7pXfy6kDkUVs=
 github.com/stretchr/testify v1.4.0 h1:2E4SXV/wtOkTonXsotYi4li6zVWxYlZuYNCXe9XRJyk=

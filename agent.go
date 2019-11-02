@@ -76,12 +76,13 @@ func (a *Agent) Close() error {
 			}
 		}
 		a.wg.Wait()
-		if err := a.Writer.Close(); err != nil && ferr == nil {
-			ferr = err
-		}
-		a.closeErr = ferr
 	})
 	return a.closeErr
+}
+
+// Wait waits for all readers are closed.
+func (a *Agent) Wait() {
+	a.wg.Wait()
 }
 
 func (a *Agent) runTail(t *tail.Tail) {
@@ -112,11 +113,13 @@ func (a *Agent) runForward() {
 		defer ticker.Stop()
 		flush = ticker.C
 	}
+
+LOOP:
 	for {
 		select {
 		case line, ok := <-a.lines:
 			if !ok {
-				return
+				break LOOP
 			}
 			text := strings.TrimSpace(line.Text)
 			_, err := a.WriteEvent(line.Time, text)
@@ -133,5 +136,9 @@ func (a *Agent) runForward() {
 				log.Println("Error: ", err)
 			}
 		}
+	}
+
+	if err := a.Writer.Close(); err != nil {
+		a.closeErr = err
 	}
 }

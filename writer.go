@@ -3,6 +3,7 @@ package agent
 import (
 	"bytes"
 	"context"
+	"errors"
 	"strings"
 	"time"
 
@@ -127,8 +128,9 @@ func (w *Writer) Flush() error {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	err := w.putEvents(context.Background(), events)
-	if err, ok := err.(awserr.Error); ok {
-		switch err.Code() {
+	var awsErr awserr.Error
+	if errors.As(err, &awsErr) {
+		switch awsErr.Code() {
 		case "ResourceNotFoundException":
 			// Maybe our log stream doesn't exist yet.
 			if err := w.createStream(ctx, true); err != nil {
@@ -176,8 +178,9 @@ func (w *Writer) createStream(ctx context.Context, tryToCreateGroup bool) error 
 		LogStreamName: &w.LogStreamName,
 	})
 	_, err := req.Send(ctx)
-	if err, ok := err.(awserr.Error); ok {
-		switch err.Code() {
+	var awsErr awserr.Error
+	if errors.As(err, &awsErr) {
+		switch awsErr.Code() {
 		case "ResourceAlreadyExistsException":
 			// already created, just ignore
 			return nil
@@ -203,8 +206,9 @@ func (w *Writer) createGroup(ctx context.Context) error {
 		LogGroupName: &w.LogGroupName,
 	})
 	_, err := req.Send(ctx)
-	if err, ok := err.(awserr.Error); ok {
-		switch err.Code() {
+	var awsErr awserr.Error
+	if errors.As(err, &awsErr) {
+		switch awsErr.Code() {
 		case "ResourceAlreadyExistsException":
 			// already created, just ignore
 			return nil

@@ -58,6 +58,12 @@ func main() {
 		log.Fatal("fail to start: ", err)
 	}
 
+	chwait := make(chan struct{}, 0)
+	go func() {
+		a.Wait()
+		close(chwait)
+	}()
+
 	// handle signals
 	chsig := make(chan os.Signal, 1)
 	signal.Notify(
@@ -85,6 +91,10 @@ func main() {
 				log.Fatal("fail to close: ", err)
 			}
 			return
+		case <-chwait:
+			if chshutdown == nil {
+				return
+			}
 		}
 	}
 }

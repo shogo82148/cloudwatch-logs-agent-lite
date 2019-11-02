@@ -6,11 +6,19 @@ import (
 	"errors"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/aws/awserr"
 	"github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs"
 	"github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs/cloudwatchlogsiface"
+)
+
+const (
+	// See: http://docs.aws.amazon.com/AmazonCloudWatchLogs/latest/APIReference/API_PutLogEvents.html
+	perEventBytes          = 26
+	maximumBytesPerPut     = 1048576
+	maximumLogEventsPerPut = 10000
 )
 
 // Writer is a wrapper CloudWatch Logs that provids io.Writer interface.
@@ -23,6 +31,7 @@ type Writer struct {
 	nextSequenceToken *string
 	remain            string
 	events            []cloudwatchlogs.InputLogEvent
+	currentByteLength int
 }
 
 // Write implements io.Writer interface.
@@ -110,10 +119,25 @@ func (w *Writer) WriteEvent(now time.Time, message string) (int, error) {
 	if message == "" {
 		return 0, nil
 	}
+
+	if w.currentByteLength+cloudwatchLen(message) >= maximumBytesPerPut {
+		// the byte length will be over the limit
+		// need flush before adding the new event.
+		if err := w.Flush(); err != nil {
+			return 0, err
+		}
+	}
+
 	w.events = append(w.events, cloudwatchlogs.InputLogEvent{
 		Message:   aws.String(message),
 		Timestamp: aws.Int64(now.Unix()*1000 + int64(now.Nanosecond()/1000000)),
 	})
+	if len(w.events) == maximumLogEventsPerPut {
+		// the count of events reaches the limit, need flush.
+		if err := w.Flush(); err != nil {
+			return 0, err
+		}
+	}
 	return len(message), nil
 }
 
@@ -121,13 +145,14 @@ func (w *Writer) WriteEvent(now time.Time, message string) (int, error) {
 func (w *Writer) Flush() error {
 	events := w.events
 	w.events = nil
+	w.currentByteLength = 0
 	if len(events) == 0 {
 		return nil
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	err := w.putEvents(context.Background(), events)
+	err := w.putEvents(ctx, events)
 	var awsErr awserr.Error
 	if errors.As(err, &awsErr) {
 		switch awsErr.Code() {
@@ -237,4 +262,22 @@ func (w *Writer) getNextSequenceToken(ctx context.Context) error {
 // Close closes the Writer.
 func (w *Writer) Close() error {
 	return w.Flush()
+}
+
+// steal from https://github.com/aws/amazon-cloudwatch-logs-for-fluent-bit/blob/b5dc2e67047da375dd5327e5a2d9cf5a2436219a/cloudwatch/cloudwatch.go#L494-L509
+// effectiveLen counts the effective number of bytes in the string, after
+// UTF-8 normalization.  UTF-8 normalization includes replacing bytes that do
+// not constitute valid UTF-8 encoded Unicode codepoints with the Unicode
+// replacement codepoint U+FFFD (a 3-byte UTF-8 sequence, represented in Go as
+// utf8.RuneError)
+func effectiveLen(line string) int {
+	effectiveBytes := 0
+	for _, rune := range line {
+		effectiveBytes += utf8.RuneLen(rune)
+	}
+	return effectiveBytes
+}
+
+func cloudwatchLen(event string) int {
+	return effectiveLen(event) + perEventBytes
 }

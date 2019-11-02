@@ -73,11 +73,11 @@ func (a *Agent) Close() error {
 				ferr = err
 			}
 		}
+		a.wg.Wait()
 		if err := a.Writer.Close(); err != nil && ferr == nil {
 			ferr = err
 		}
 		a.closeErr = ferr
-		a.wg.Wait()
 	})
 	return a.closeErr
 }

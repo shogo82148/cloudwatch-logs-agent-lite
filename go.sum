@@ -14,8 +14,6 @@ github.com/jmespath/go-jmespath v0.0.0-20180206201540-c2b33e8439af h1:pmfjZENx5i
 github.com/jmespath/go-jmespath v0.0.0-20180206201540-c2b33e8439af/go.mod h1:Nht3zPeWKUH0NzdCt2Blrr5ys8VGpn0CEB0cQHVjt7k=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
-github.com/shogo82148/go-tail v0.0.2 h1:l/WiOIJYfcewc6/HisvEKV24ec7Z3M7wmBuBDKM2noU=
-github.com/shogo82148/go-tail v0.0.2/go.mod h1:y96I6vs80xyEur05XIx1T73Sd52du6palkY+bl7trrQ=
 github.com/shogo82148/go-tail v0.0.3 h1:3bQHYMNdkvy4S0GMjpABoW5/aRN68IKt+f4FVCqL6WE=
 github.com/shogo82148/go-tail v0.0.3/go.mod h1:y96I6vs80xyEur05XIx1T73Sd52du6palkY+bl7trrQ=
 github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=

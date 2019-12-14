@@ -1,7 +1,7 @@
 module github.com/shogo82148/cloudwatch-logs-agent-lite
 
 require (
-	github.com/aws/aws-sdk-go-v2 v0.17.0
+	github.com/aws/aws-sdk-go-v2 v0.18.0
 	github.com/golang/mock v1.3.1
 	github.com/shogo82148/go-tail v0.0.3
 	github.com/stretchr/testify v1.4.0

@@ -30,6 +30,7 @@ func TestWriter_WriteEvent(t *testing.T) {
 		Request: &aws.Request{
 			Data:        &cloudwatchlogs.PutLogEventsOutput{},
 			HTTPRequest: &http.Request{},
+			Retryer:     aws.NoOpRetryer{},
 		},
 	})
 	w := &Writer{
@@ -60,6 +61,7 @@ func TestWriter_createGroup(t *testing.T) {
 			Request: &aws.Request{
 				Error:       awserr.New(cloudwatchlogs.ErrCodeResourceNotFoundException, "event stream not found", errors.New("api error")),
 				HTTPRequest: &http.Request{},
+				Retryer:     aws.NoOpRetryer{},
 			},
 		}),
 		mockCloudWatch.EXPECT().CreateLogStreamRequest(gomock.Any()).Do(func(input *cloudwatchlogs.CreateLogStreamInput) {
@@ -69,6 +71,7 @@ func TestWriter_createGroup(t *testing.T) {
 			Request: &aws.Request{
 				Error:       awserr.New(cloudwatchlogs.ErrCodeResourceNotFoundException, "event group not found", errors.New("api error")),
 				HTTPRequest: &http.Request{},
+				Retryer:     aws.NoOpRetryer{},
 			},
 		}),
 		mockCloudWatch.EXPECT().CreateLogGroupRequest(gomock.Any()).Do(func(input *cloudwatchlogs.CreateLogGroupInput) {
@@ -77,6 +80,7 @@ func TestWriter_createGroup(t *testing.T) {
 			Request: &aws.Request{
 				Data:        &cloudwatchlogs.CreateLogGroupOutput{},
 				HTTPRequest: &http.Request{},
+				Retryer:     aws.NoOpRetryer{},
 			},
 		}),
 		mockCloudWatch.EXPECT().CreateLogStreamRequest(gomock.Any()).Do(func(input *cloudwatchlogs.CreateLogStreamInput) {
@@ -86,6 +90,7 @@ func TestWriter_createGroup(t *testing.T) {
 			Request: &aws.Request{
 				Data:        &cloudwatchlogs.CreateLogStreamOutput{},
 				HTTPRequest: &http.Request{},
+				Retryer:     aws.NoOpRetryer{},
 			},
 		}),
 		mockCloudWatch.EXPECT().PutLogEventsRequest(gomock.Any()).Do(func(input *cloudwatchlogs.PutLogEventsInput) {
@@ -96,6 +101,7 @@ func TestWriter_createGroup(t *testing.T) {
 			Request: &aws.Request{
 				Data:        &cloudwatchlogs.PutLogEventsOutput{},
 				HTTPRequest: &http.Request{},
+				Retryer:     aws.NoOpRetryer{},
 			},
 		}),
 	)

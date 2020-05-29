@@ -6,7 +6,7 @@ require (
 	github.com/golang/mock v1.4.3
 	github.com/jmespath/go-jmespath v0.3.0 // indirect
 	github.com/shogo82148/go-tail v0.0.3
-	github.com/stretchr/testify v1.5.1
+	github.com/stretchr/testify v1.6.0
 	golang.org/x/sys v0.0.0-20200317113312-5766fd39f98d // indirect
 )
 

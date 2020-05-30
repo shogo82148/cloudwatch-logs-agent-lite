@@ -38,17 +38,15 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-go-
 
+      - name: Test
+        run: make test
+
       - name: Send coverage
         uses: shogo82148/actions-goveralls@v1
         with:
           path-to-profile: profile.cov
           parallel: true
           flag-name: OS-${{ matrix.os }}-Go-${{ matrix.go }}
-
-      - name: Test
-        run: make test
-        env:
-          GO111MODULE: "on"
 
   # notifies that all test jobs are finished.
   finish:

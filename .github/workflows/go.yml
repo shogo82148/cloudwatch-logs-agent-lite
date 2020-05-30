@@ -45,10 +45,10 @@ jobs:
           parallel: true
           flag-name: OS-${{ matrix.os }}-Go-${{ matrix.go }}
 
-    - name: Test
-      run: make test
-      env:
-        GO111MODULE: "on"
+      - name: Test
+        run: make test
+        env:
+          GO111MODULE: "on"
 
   # notifies that all test jobs are finished.
   finish:

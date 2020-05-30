@@ -159,6 +159,20 @@ func (mr *MockClientAPIMockRecorder) DeleteMetricFilterRequest(arg0 interface{})
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteMetricFilterRequest", reflect.TypeOf((*MockClientAPI)(nil).DeleteMetricFilterRequest), arg0)
 }
 
+// DeleteQueryDefinitionRequest mocks base method
+func (m *MockClientAPI) DeleteQueryDefinitionRequest(arg0 *cloudwatchlogs.DeleteQueryDefinitionInput) cloudwatchlogs.DeleteQueryDefinitionRequest {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteQueryDefinitionRequest", arg0)
+	ret0, _ := ret[0].(cloudwatchlogs.DeleteQueryDefinitionRequest)
+	return ret0
+}
+
+// DeleteQueryDefinitionRequest indicates an expected call of DeleteQueryDefinitionRequest
+func (mr *MockClientAPIMockRecorder) DeleteQueryDefinitionRequest(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteQueryDefinitionRequest", reflect.TypeOf((*MockClientAPI)(nil).DeleteQueryDefinitionRequest), arg0)
+}
+
 // DeleteResourcePolicyRequest mocks base method
 func (m *MockClientAPI) DeleteResourcePolicyRequest(arg0 *cloudwatchlogs.DeleteResourcePolicyInput) cloudwatchlogs.DeleteResourcePolicyRequest {
 	m.ctrl.T.Helper()
@@ -283,6 +297,20 @@ func (m *MockClientAPI) DescribeQueriesRequest(arg0 *cloudwatchlogs.DescribeQuer
 func (mr *MockClientAPIMockRecorder) DescribeQueriesRequest(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DescribeQueriesRequest", reflect.TypeOf((*MockClientAPI)(nil).DescribeQueriesRequest), arg0)
+}
+
+// DescribeQueryDefinitionsRequest mocks base method
+func (m *MockClientAPI) DescribeQueryDefinitionsRequest(arg0 *cloudwatchlogs.DescribeQueryDefinitionsInput) cloudwatchlogs.DescribeQueryDefinitionsRequest {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DescribeQueryDefinitionsRequest", arg0)
+	ret0, _ := ret[0].(cloudwatchlogs.DescribeQueryDefinitionsRequest)
+	return ret0
+}
+
+// DescribeQueryDefinitionsRequest indicates an expected call of DescribeQueryDefinitionsRequest
+func (mr *MockClientAPIMockRecorder) DescribeQueryDefinitionsRequest(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DescribeQueryDefinitionsRequest", reflect.TypeOf((*MockClientAPI)(nil).DescribeQueryDefinitionsRequest), arg0)
 }
 
 // DescribeResourcePoliciesRequest mocks base method
@@ -465,6 +493,20 @@ func (m *MockClientAPI) PutMetricFilterRequest(arg0 *cloudwatchlogs.PutMetricFil
 func (mr *MockClientAPIMockRecorder) PutMetricFilterRequest(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PutMetricFilterRequest", reflect.TypeOf((*MockClientAPI)(nil).PutMetricFilterRequest), arg0)
+}
+
+// PutQueryDefinitionRequest mocks base method
+func (m *MockClientAPI) PutQueryDefinitionRequest(arg0 *cloudwatchlogs.PutQueryDefinitionInput) cloudwatchlogs.PutQueryDefinitionRequest {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PutQueryDefinitionRequest", arg0)
+	ret0, _ := ret[0].(cloudwatchlogs.PutQueryDefinitionRequest)
+	return ret0
+}
+
+// PutQueryDefinitionRequest indicates an expected call of PutQueryDefinitionRequest
+func (mr *MockClientAPIMockRecorder) PutQueryDefinitionRequest(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PutQueryDefinitionRequest", reflect.TypeOf((*MockClientAPI)(nil).PutQueryDefinitionRequest), arg0)
 }
 
 // PutResourcePolicyRequest mocks base method

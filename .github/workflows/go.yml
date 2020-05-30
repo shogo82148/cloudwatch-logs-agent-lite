@@ -43,7 +43,7 @@ jobs:
         with:
           path-to-profile: profile.cov
           parallel: true
-          flag-name: OS-$${{ matrix.os }}-Go-${{ matrix.go }}
+          flag-name: OS-${{ matrix.os }}-Go-${{ matrix.go }}
 
     - name: Test
       run: make test

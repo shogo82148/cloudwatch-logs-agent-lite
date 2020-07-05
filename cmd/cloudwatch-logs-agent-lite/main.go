@@ -6,15 +6,14 @@ import (
 	"encoding/hex"
 	"flag"
 	"fmt"
-	"io"
 	"log"
-	"net/http"
 	"os"
 	"os/signal"
 	"strings"
 	"syscall"
 	"time"
 
+	"github.com/aws/aws-sdk-go-v2/aws/ec2metadata"
 	"github.com/aws/aws-sdk-go-v2/aws/external"
 	agent "github.com/shogo82148/cloudwatch-logs-agent-lite"
 )
@@ -118,21 +117,22 @@ func generateStreamName() string {
 }
 
 func getAWSInstanceID() string {
+	cfg, err := external.LoadDefaultAWSConfig()
+	if err != nil {
+		return ""
+	}
+
+	// use a shorter timeout than default because the metadata
+	// service is local if it is running, and to fail faster
+	// if not running on an ec2 instance.
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
-	req, err := http.NewRequest(http.MethodGet, "http://169.254.169.254/latest/meta-data/instance-id", nil)
+
+	svc := ec2metadata.New(cfg)
+	id, err := svc.GetMetadata(ctx, "instance-id")
 	if err != nil {
 		return ""
 	}
-	req = req.WithContext(ctx)
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return ""
-	}
-	defer resp.Body.Close()
-	var builder strings.Builder
-	if _, err := io.Copy(&builder, resp.Body); err != nil {
-		return ""
-	}
-	return strings.TrimSpace(builder.String())
+
+	return strings.TrimSpace(id)
 }

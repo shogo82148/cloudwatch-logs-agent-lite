@@ -44,7 +44,7 @@ build-darwin-amd64:
 
 ##### release settings
 
-.PHONY: release-linux-amd64 release-darwin-amd64
+.PHONY: release-linux-amd64 release-darwin-amd64 release-linux-arm64
 .PHONY: release-targz release-zip release-files release-upload
 
 $(RELEASE_DIR)/cloudwatch-logs-agent-lite_$(GOOS)_$(GOARCH):
@@ -53,8 +53,11 @@ $(RELEASE_DIR)/cloudwatch-logs-agent-lite_$(GOOS)_$(GOARCH):
 release-linux-amd64:
 	@$(MAKE) release-targz GOOS=linux GOARCH=amd64
 
+release-linux-arm64:
+	@$(MAKE) release-targz GOOS=linux GOARCH=arm64
+
 release-darwin-amd64:
-	@$(MAKE) release-zip GOOS=darwin GOARCH=amd64
+	@$(MAKE) release-targz GOOS=darwin GOARCH=amd64
 
 release-targz: build $(RELEASE_DIR)/cloudwatch-logs-agent-lite_$(GOOS)_$(GOARCH)
 	@echo " * Creating tar.gz for $(GOOS)/$(GOARCH)"
@@ -64,7 +67,7 @@ release-zip: build $(RELEASE_DIR)/cloudwatch-logs-agent-lite_$(GOOS)_$(GOARCH)
 	@echo " * Creating zip for $(GOOS)/$(GOARCH)"
 	cd $(ARTIFACTS_DIR) && zip -9 $(RELEASE_DIR)/cloudwatch-logs-agent-lite_$(GOOS)_$(GOARCH).zip cloudwatch-logs-agent-lite_$(GOOS)_$(GOARCH)/*
 
-release-files: release-linux-amd64 release-darwin-amd64
+release-files: release-linux-amd64 release-darwin-amd64 release-linux-arm64
 
 release-upload: release-files
 	ghr -u $(GITHUB_USERNAME) --draft --replace v$(VERSION) $(RELEASE_DIR)

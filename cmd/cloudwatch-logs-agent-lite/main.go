@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"flag"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"os"
 	"os/signal"
@@ -13,8 +14,8 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/aws/aws-sdk-go-v2/aws/ec2metadata"
-	"github.com/aws/aws-sdk-go-v2/aws/external"
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/ec2imds"
 	agent "github.com/shogo82148/cloudwatch-logs-agent-lite"
 )
 
@@ -39,7 +40,7 @@ func main() {
 		streamName = generateStreamName()
 	}
 
-	cfg, err := external.LoadDefaultAWSConfig()
+	cfg, err := config.LoadDefaultConfig()
 	if err != nil {
 		log.Fatal("fail to load aws config: ", err)
 	}
@@ -117,7 +118,7 @@ func generateStreamName() string {
 }
 
 func getAWSInstanceID() string {
-	cfg, err := external.LoadDefaultAWSConfig()
+	cfg, err := config.LoadDefaultConfig()
 	if err != nil {
 		return ""
 	}
@@ -128,11 +129,16 @@ func getAWSInstanceID() string {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 
-	svc := ec2metadata.New(cfg)
-	id, err := svc.GetMetadata(ctx, "instance-id")
+	svc := ec2imds.NewFromConfig(cfg)
+	out, err := svc.GetMetadata(ctx, &ec2imds.GetMetadataInput{Path: "instance-id"})
+	if err != nil {
+		return ""
+	}
+	defer out.Content.Close()
+	id, err := ioutil.ReadAll(out.Content)
 	if err != nil {
 		return ""
 	}
 
-	return strings.TrimSpace(id)
+	return strings.TrimSpace(string(id))
 }

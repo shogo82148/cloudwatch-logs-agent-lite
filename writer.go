@@ -9,9 +9,8 @@ import (
 	"unicode/utf8"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/aws/awserr"
 	"github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs"
-	"github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs/cloudwatchlogsiface"
+	"github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs/types"
 )
 
 const (
@@ -27,11 +26,18 @@ type Writer struct {
 	LogGroupName  string
 	LogStreamName string
 
-	logs              cloudwatchlogsiface.ClientAPI
+	logs              *cloudwatchlogs.Client
 	nextSequenceToken *string
 	remain            string
-	events            []cloudwatchlogs.InputLogEvent
+	events            []*types.InputLogEvent
 	currentByteLength int
+}
+
+func (w *Writer) logsClient() *cloudwatchlogs.Client {
+	if w.logs == nil {
+		w.logs = cloudwatchlogs.NewFromConfig(w.Config)
+	}
+	return w.logs
 }
 
 // Write implements io.Writer interface.
@@ -128,7 +134,7 @@ func (w *Writer) WriteEvent(now time.Time, message string) (int, error) {
 		}
 	}
 
-	w.events = append(w.events, cloudwatchlogs.InputLogEvent{
+	w.events = append(w.events, &types.InputLogEvent{
 		Message:   aws.String(message),
 		Timestamp: aws.Int64(now.Unix()*1000 + int64(now.Nanosecond()/1000000)),
 	})
@@ -153,39 +159,37 @@ func (w *Writer) Flush() error {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	err := w.putEvents(ctx, events)
-	var awsErr awserr.Error
-	if errors.As(err, &awsErr) {
-		switch awsErr.Code() {
-		case cloudwatchlogs.ErrCodeResourceNotFoundException:
+	if err != nil {
+		if awsErr := (*types.ResourceNotFoundException)(nil); errors.As(err, &awsErr) {
 			// Maybe our log stream doesn't exist yet.
 			if err := w.createStream(ctx, true); err != nil {
 				return err
 			}
 			return w.putEvents(ctx, events)
-		case cloudwatchlogs.ErrCodeDataAlreadyAcceptedException:
+		}
+		if awsErr := (*types.DataAlreadyAcceptedException)(nil); errors.As(err, &awsErr) {
 			// This batch was already sent
 			return nil
-		case cloudwatchlogs.ErrCodeInvalidSequenceTokenException:
+		}
+		if awsErr := (*types.InvalidSequenceTokenException)(nil); errors.As(err, &awsErr) {
 			if err := w.getNextSequenceToken(ctx); err != nil {
 				return err
 			}
 			return w.putEvents(ctx, events)
 		}
+		return err
 	}
-	return err
+	return nil
 }
 
-func (w *Writer) putEvents(ctx context.Context, events []cloudwatchlogs.InputLogEvent) error {
-	if w.logs == nil {
-		w.logs = cloudwatchlogs.New(w.Config)
-	}
-	req := w.logs.PutLogEventsRequest(&cloudwatchlogs.PutLogEventsInput{
+func (w *Writer) putEvents(ctx context.Context, events []*types.InputLogEvent) error {
+	logs := w.logsClient()
+	resp, err := logs.PutLogEvents(ctx, &cloudwatchlogs.PutLogEventsInput{
 		LogEvents:     events,
 		LogGroupName:  &w.LogGroupName,
 		LogStreamName: &w.LogStreamName,
 		SequenceToken: w.nextSequenceToken,
 	})
-	resp, err := req.Send(ctx)
 	if err != nil {
 		w.nextSequenceToken = nil
 		return err
@@ -195,21 +199,17 @@ func (w *Writer) putEvents(ctx context.Context, events []cloudwatchlogs.InputLog
 }
 
 func (w *Writer) createStream(ctx context.Context, tryToCreateGroup bool) error {
-	if w.logs == nil {
-		w.logs = cloudwatchlogs.New(w.Config)
-	}
-	req := w.logs.CreateLogStreamRequest(&cloudwatchlogs.CreateLogStreamInput{
+	logs := w.logsClient()
+	_, err := logs.CreateLogStream(ctx, &cloudwatchlogs.CreateLogStreamInput{
 		LogGroupName:  &w.LogGroupName,
 		LogStreamName: &w.LogStreamName,
 	})
-	_, err := req.Send(ctx)
-	var awsErr awserr.Error
-	if errors.As(err, &awsErr) {
-		switch awsErr.Code() {
-		case cloudwatchlogs.ErrCodeResourceAlreadyExistsException:
+	if err != nil {
+		if awsErr := (*types.ResourceAlreadyExistsException)(nil); errors.As(err, &awsErr) {
 			// already created, just ignore
 			return nil
-		case cloudwatchlogs.ErrCodeResourceNotFoundException:
+		}
+		if awsErr := (*types.ResourceNotFoundException)(nil); errors.As(err, &awsErr) {
 			// Maybe our log group doesn't exist yet.
 			if !tryToCreateGroup {
 				return err
@@ -219,39 +219,33 @@ func (w *Writer) createStream(ctx context.Context, tryToCreateGroup bool) error 
 			}
 			return w.createStream(ctx, false)
 		}
+		return err
 	}
-	return err
+	return nil
 }
 
 func (w *Writer) createGroup(ctx context.Context) error {
-	if w.logs == nil {
-		w.logs = cloudwatchlogs.New(w.Config)
-	}
-	req := w.logs.CreateLogGroupRequest(&cloudwatchlogs.CreateLogGroupInput{
+	logs := w.logsClient()
+	_, err := logs.CreateLogGroup(ctx, &cloudwatchlogs.CreateLogGroupInput{
 		LogGroupName: &w.LogGroupName,
 	})
-	_, err := req.Send(ctx)
-	var awsErr awserr.Error
-	if errors.As(err, &awsErr) {
-		switch awsErr.Code() {
-		case cloudwatchlogs.ErrCodeResourceAlreadyExistsException:
+	if err != nil {
+		if awsErr := (*types.ResourceAlreadyExistsException)(nil); errors.As(err, &awsErr) {
 			// already created, just ignore
 			return nil
 		}
+		return err
 	}
-	return err
+	return nil
 }
 
 func (w *Writer) getNextSequenceToken(ctx context.Context) error {
-	if w.logs == nil {
-		w.logs = cloudwatchlogs.New(w.Config)
-	}
-	req := w.logs.DescribeLogStreamsRequest(&cloudwatchlogs.DescribeLogStreamsInput{
+	logs := w.logsClient()
+	resp, err := logs.DescribeLogStreams(ctx, &cloudwatchlogs.DescribeLogStreamsInput{
 		LogGroupName:        &w.LogGroupName,
 		LogStreamNamePrefix: &w.LogStreamName,
-		Limit:               aws.Int64(1),
+		Limit:               aws.Int32(1),
 	})
-	resp, err := req.Send(ctx)
 	if err != nil {
 		return err
 	}

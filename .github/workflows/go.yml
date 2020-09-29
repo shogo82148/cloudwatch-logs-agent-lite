@@ -6,7 +6,6 @@ on:
   pull_request:
 
 jobs:
-
   test:
     name: Test
     runs-on: ${{ matrix.os }}
@@ -17,11 +16,10 @@ jobs:
           - ubuntu-latest
           - macOS-latest
         go:
-          - '1.14'
-          - '1'
+          - "1.15"
+          - "1"
 
     steps:
-
       - name: Set up Go ${{ matrix.go }}
         uses: actions/setup-go@v2
         with:

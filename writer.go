@@ -205,7 +205,7 @@ func (w *Writer) createStream(ctx context.Context, tryToCreateGroup bool) error 
 		LogStreamName: &w.LogStreamName,
 	})
 	if err != nil {
-		if awsErr := (*types.ResourceAlreadyExistsException)(nil); errors.As(err, *awsErr) {
+		if awsErr := (*types.ResourceAlreadyExistsException)(nil); errors.As(err, &awsErr) {
 			// already created, just ignore
 			return nil
 		}

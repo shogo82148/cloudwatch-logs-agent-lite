@@ -11,6 +11,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs"
 	"github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs/types"
+	cloudwatchlogsiface "github.com/shogo82148/cloudwatch-logs-agent-lite/internal/cloudwatchlogs"
 )
 
 const (
@@ -26,14 +27,14 @@ type Writer struct {
 	LogGroupName  string
 	LogStreamName string
 
-	logs              *cloudwatchlogs.Client
+	logs              cloudwatchlogsiface.Interface
 	nextSequenceToken *string
 	remain            string
 	events            []*types.InputLogEvent
 	currentByteLength int
 }
 
-func (w *Writer) logsClient() *cloudwatchlogs.Client {
+func (w *Writer) logsClient() cloudwatchlogsiface.Interface {
 	if w.logs == nil {
 		w.logs = cloudwatchlogs.NewFromConfig(w.Config)
 	}

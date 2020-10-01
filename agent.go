@@ -10,8 +10,6 @@ import (
 	tail "github.com/shogo82148/go-tail"
 )
 
-//go:generate mockgen -destination mock_cloudwatchlogsiface/mock.go "github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs/cloudwatchlogsiface" ClientAPI
-
 // Agent is a CloudWatch Logs Agent Lite.
 type Agent struct {
 	*Writer

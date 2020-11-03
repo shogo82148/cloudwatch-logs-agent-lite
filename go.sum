@@ -8,6 +8,8 @@ github.com/aws/aws-sdk-go-v2/credentials v0.1.3 h1:RO+Zd6vbsfRmr1M/hyzALKN2uuSzf
 github.com/aws/aws-sdk-go-v2/credentials v0.1.3/go.mod h1:Bkc9+5pYXzMEv0lTLALes2mKqxHJuSGUQZpT8cm0RYc=
 github.com/aws/aws-sdk-go-v2/ec2imds v0.1.3 h1:PwcbtgVwH5IhNIzpkK+g7/f5lJ5YmcetMGcFJ5Z+VM4=
 github.com/aws/aws-sdk-go-v2/ec2imds v0.1.3/go.mod h1:7TwGIbQjJpNi4BB2fdAR4YrVcPe9025baOkFcuYIgLY=
+github.com/aws/aws-sdk-go-v2/ec2imds v0.1.4 h1:N3atV6naU7rFtS3gg/XU2ZuiPqzFm3HONBbnGDdPq1A=
+github.com/aws/aws-sdk-go-v2/ec2imds v0.1.4/go.mod h1:h5WB2P4CTnVroyw/gvIiyMTtl/zvnKAC4H74EWiKOco=
 github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs v0.29.0 h1:k0QLjr6y+jm+pOPu5a8sLNyQOhZgiCjRXdi1USkLkO4=
 github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs v0.29.0/go.mod h1:8NV5H1t3M+vY0pc/fN3j3IIg+RAfQEf0fMbWuDVXPL4=
 github.com/aws/aws-sdk-go-v2/service/sts v0.28.0 h1:vT3BsN262uYMR2J4JC7oPbUwNvbnYUJ2GTwOtbfK+tk=

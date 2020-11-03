@@ -5,7 +5,7 @@ go 1.15
 require (
 	github.com/aws/aws-sdk-go-v2 v0.29.0
 	github.com/aws/aws-sdk-go-v2/config v0.2.1
-	github.com/aws/aws-sdk-go-v2/ec2imds v0.1.3
+	github.com/aws/aws-sdk-go-v2/ec2imds v0.1.4
 	github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs v0.29.0
 	github.com/fsnotify/fsnotify v1.4.9 // indirect
 	github.com/shogo82148/go-tail v0.0.3

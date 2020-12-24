@@ -3,8 +3,8 @@ module github.com/shogo82148/cloudwatch-logs-agent-lite
 go 1.15
 
 require (
-	github.com/aws/aws-sdk-go-v2 v0.30.0
-	github.com/aws/aws-sdk-go-v2/config v0.3.0
+	github.com/aws/aws-sdk-go-v2 v0.31.0
+	github.com/aws/aws-sdk-go-v2/config v0.4.0
 	github.com/aws/aws-sdk-go-v2/ec2imds v0.1.5
 	github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs v0.29.0
 	github.com/fsnotify/fsnotify v1.4.9 // indirect

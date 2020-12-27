@@ -15,11 +15,14 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/config"
-	"github.com/aws/aws-sdk-go-v2/ec2imds"
+	"github.com/aws/aws-sdk-go-v2/feature/ec2/imds"
 	agent "github.com/shogo82148/cloudwatch-logs-agent-lite"
 )
 
 func main() {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
 	var groupName, streamName string
 	var interval time.Duration
 	var version bool
@@ -37,10 +40,10 @@ func main() {
 		log.Fatal("-log-group-name is required.")
 	}
 	if streamName == "" {
-		streamName = generateStreamName()
+		streamName = generateStreamName(ctx)
 	}
 
-	cfg, err := config.LoadDefaultConfig()
+	cfg, err := config.LoadDefaultConfig(ctx)
 	if err != nil {
 		log.Fatal("fail to load aws config: ", err)
 	}
@@ -99,9 +102,9 @@ func main() {
 	}
 }
 
-func generateStreamName() string {
+func generateStreamName(ctx context.Context) string {
 	// default: AWS EC2 Instance ID
-	if name := getAWSInstanceID(); name != "" {
+	if name := getAWSInstanceID(ctx); name != "" {
 		return name
 	}
 	// fall back to hostname
@@ -117,20 +120,20 @@ func generateStreamName() string {
 	return fmt.Sprintf("%09d", time.Now().Nanosecond())
 }
 
-func getAWSInstanceID() string {
-	cfg, err := config.LoadDefaultConfig()
+func getAWSInstanceID(ctx context.Context) string {
+	// use a shorter timeout than default because the metadata
+	// service is local if it is running, and to fail faster
+	// if not running on an ec2 instance.
+	ctx, cancel := context.WithTimeout(ctx, time.Second)
+	defer cancel()
+
+	cfg, err := config.LoadDefaultConfig(ctx)
 	if err != nil {
 		return ""
 	}
 
-	// use a shorter timeout than default because the metadata
-	// service is local if it is running, and to fail faster
-	// if not running on an ec2 instance.
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-	defer cancel()
-
-	svc := ec2imds.NewFromConfig(cfg)
-	out, err := svc.GetMetadata(ctx, &ec2imds.GetMetadataInput{Path: "instance-id"})
+	svc := imds.NewFromConfig(cfg)
+	out, err := svc.GetMetadata(ctx, &imds.GetMetadataInput{Path: "instance-id"})
 	if err != nil {
 		return ""
 	}

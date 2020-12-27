@@ -17,7 +17,7 @@ const (
 )
 
 func TestWriter_WriteEvent(t *testing.T) {
-	var events []*types.InputLogEvent
+	var events []types.InputLogEvent
 	mockCloudWatch := &cloudwatchlogsiface.Mock{
 		PutLogEventsFunc: func(ctx context.Context, params *cloudwatchlogs.PutLogEventsInput, optFns ...func(*cloudwatchlogs.Options)) (*cloudwatchlogs.PutLogEventsOutput, error) {
 			events = append(events, params.LogEvents...)
@@ -58,7 +58,7 @@ func TestWriter_WriteEvent(t *testing.T) {
 }
 
 func TestWriter_createGroup(t *testing.T) {
-	var events []*types.InputLogEvent
+	var events []types.InputLogEvent
 	var logGroupName, logStreamName string
 	mockCloudWatch := &cloudwatchlogsiface.Mock{
 		PutLogEventsFunc: func(ctx context.Context, params *cloudwatchlogs.PutLogEventsInput, optFns ...func(*cloudwatchlogs.Options)) (*cloudwatchlogs.PutLogEventsOutput, error) {

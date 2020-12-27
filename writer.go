@@ -30,7 +30,7 @@ type Writer struct {
 	logs              cloudwatchlogsiface.Interface
 	nextSequenceToken *string
 	remain            string
-	events            []*types.InputLogEvent
+	events            []types.InputLogEvent
 	currentByteLength int
 }
 
@@ -135,7 +135,7 @@ func (w *Writer) WriteEvent(now time.Time, message string) (int, error) {
 		}
 	}
 
-	w.events = append(w.events, &types.InputLogEvent{
+	w.events = append(w.events, types.InputLogEvent{
 		Message:   aws.String(message),
 		Timestamp: aws.Int64(now.Unix()*1000 + int64(now.Nanosecond()/1000000)),
 	})
@@ -183,7 +183,7 @@ func (w *Writer) Flush() error {
 	return nil
 }
 
-func (w *Writer) putEvents(ctx context.Context, events []*types.InputLogEvent) error {
+func (w *Writer) putEvents(ctx context.Context, events []types.InputLogEvent) error {
 	logs := w.logsClient()
 	resp, err := logs.PutLogEvents(ctx, &cloudwatchlogs.PutLogEventsInput{
 		LogEvents:     events,

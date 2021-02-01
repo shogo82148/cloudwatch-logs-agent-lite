@@ -8,6 +8,8 @@ github.com/aws/aws-sdk-go-v2/credentials v1.0.0 h1:0M7netgZ8gCV4v7z1km+Fbl7j6KQY
 github.com/aws/aws-sdk-go-v2/credentials v1.0.0/go.mod h1:/SvsiqBf509hG4Bddigr3NB12MIpfHhZapyBurJe8aY=
 github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.0.0 h1:lO7fH5n7Q1dKcDBpuTmwJylD1bOQiRig8LI6TD9yVQk=
 github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.0.0/go.mod h1:wpMHDCXvOXZxGCRSidyepa8uJHY4vaBGfY2/+oKU/Bc=
+github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.0.1 h1:eoT5e1jJf8Vcacu+mkEe1cgsgEAkuabpjhgq03GiXKc=
+github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.0.1/go.mod h1:b+8dhYiS3m1xpzTZWk5EuQml/vSmPhKlzM/bAm/fttY=
 github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs v1.1.0 h1:nbpXr3Oj8WDbarZyzvZcAEwvAU6p/bxED/oYuzSwXwo=
 github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs v1.1.0/go.mod h1:ZtlrbdwqoFZ45Ak9+uxZ3JxrACxs+m1SC+t1+pXPSR0=
 github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.0.0 h1:IAutMPSrynpvKOpHG6HyWHmh1xmxWAmYOK84NrQVqVQ=

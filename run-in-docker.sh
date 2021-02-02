@@ -6,4 +6,4 @@ docker run --rm -it \
     -e "GOOS=${GOOS:-linux}" -e "GOARCH=${GOARCH:-amd64}" -e "CGO_ENABLED=0" \
     -v "$CURRENT/.mod":/go/pkg/mod \
     -v "$CURRENT":/go/src/github.com/shogo82148/cloudwatch-logs-agent-lite \
-    -w /go/src/github.com/shogo82148/cloudwatch-logs-agent-lite golang:1.15.6 "$@"
+    -w /go/src/github.com/shogo82148/cloudwatch-logs-agent-lite golang:1.15.7 "$@"

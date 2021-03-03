@@ -10,6 +10,7 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"runtime"
 	"strings"
 	"syscall"
 	"time"
@@ -19,21 +20,25 @@ import (
 	agent "github.com/shogo82148/cloudwatch-logs-agent-lite"
 )
 
+// these variable is set by goreleaser
+var version = "main" // .Version
+var commit = "HEAD"  // .ShortCommit
+
 func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
 	var groupName, streamName string
 	var interval time.Duration
-	var version bool
+	var showVersion bool
 	flag.StringVar(&groupName, "log-group-name", "", "log group name")
 	flag.StringVar(&streamName, "log-stream-name", "", "log stream name")
 	flag.DurationVar(&interval, "flush-interval", time.Second, "flush interval to flush the logs")
-	flag.BoolVar(&version, "version", false, "show the version")
+	flag.BoolVar(&showVersion, "version", false, "show the version")
 	flag.Parse()
 
-	if version {
-		fmt.Printf("cloudwatch-logs-agent-lite v%s\n", agent.Version)
+	if showVersion {
+		fmt.Printf("cloudwatch-logs-agent-lite version %s (rev %s) %s/%s (built by %s)\n", version, commit, runtime.GOOS, runtime.GOARCH, runtime.Version())
 		return
 	}
 	if groupName == "" {

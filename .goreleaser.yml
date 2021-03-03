@@ -1,0 +1,48 @@
+# This is an example .goreleaser.yml file with some sane defaults.
+# Make sure to check the documentation at http://goreleaser.com
+before:
+  hooks:
+    - go mod download
+builds:
+  - id: "cli-amd64"
+    env:
+      - CGO_ENABLED=0
+    main: ./cmd/cloudwatch-logs-agent-lite/main.go
+    goos:
+      - linux
+      - darwin
+    goarch:
+      - amd64
+    binary: cloudwatch-logs-agent-lite
+    ldflags:
+      - -s -w
+      - -X main.version={{.Version}}
+      - -X main.commit={{.ShortCommit}}
+  - id: "cli-arm64"
+    env:
+      - CGO_ENABLED=0
+    main: ./cmd/cloudwatch-logs-agent-lite/main.go
+    goos:
+      - linux
+      - darwin
+    goarch:
+      - arm64
+    binary: cloudwatch-logs-agent-lite
+    ldflags:
+      - -s -w
+      - -X main.version={{.Version}}
+      - -X main.commit={{.ShortCommit}}
+archives:
+  - builds:
+      - cli-amd64
+      - cli-arm64
+checksum:
+  name_template: "checksums.txt"
+snapshot:
+  name_template: "{{ .Tag }}-next"
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"

@@ -30,11 +30,13 @@ func main() {
 
 	var groupName, streamName string
 	var region string
+	var logRetentionDays int
 	var interval time.Duration
 	var showVersion bool
 	flag.StringVar(&groupName, "log-group-name", "", "log group name")
 	flag.StringVar(&streamName, "log-stream-name", "", "log stream name")
 	flag.StringVar(&region, "region", "", "aws region")
+	flag.IntVar(nil, "log-retention-days", 0, "If set to a number greater than zero, and newly create log group's retention policy is set to this many days.")
 	flag.DurationVar(&interval, "flush-interval", time.Second, "flush interval to flush the logs")
 	flag.BoolVar(&showVersion, "version", false, "show the version")
 	flag.Parse()
@@ -62,9 +64,10 @@ func main() {
 
 	a := &agent.Agent{
 		Writer: &agent.Writer{
-			Config:        cfg,
-			LogGroupName:  groupName,
-			LogStreamName: streamName,
+			Config:           cfg,
+			LogGroupName:     groupName,
+			LogStreamName:    streamName,
+			LogRetentionDays: logRetentionDays,
 		},
 		Files:         flag.Args(),
 		FlushInterval: interval,

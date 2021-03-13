@@ -29,10 +29,12 @@ func main() {
 	defer cancel()
 
 	var groupName, streamName string
+	var region string
 	var interval time.Duration
 	var showVersion bool
 	flag.StringVar(&groupName, "log-group-name", "", "log group name")
 	flag.StringVar(&streamName, "log-stream-name", "", "log stream name")
+	flag.StringVar(&region, "region", "", "aws region")
 	flag.DurationVar(&interval, "flush-interval", time.Second, "flush interval to flush the logs")
 	flag.BoolVar(&showVersion, "version", false, "show the version")
 	flag.Parse()
@@ -48,7 +50,12 @@ func main() {
 		streamName = generateStreamName(ctx)
 	}
 
-	cfg, err := config.LoadDefaultConfig(ctx)
+	opts := []func(*config.LoadOptions) error{}
+	if region != "" {
+		opts = append(opts, config.WithRegion(region))
+	}
+
+	cfg, err := config.LoadDefaultConfig(ctx, opts...)
 	if err != nil {
 		log.Fatal("fail to load aws config: ", err)
 	}

@@ -36,7 +36,7 @@ func main() {
 	flag.StringVar(&groupName, "log-group-name", "", "log group name")
 	flag.StringVar(&streamName, "log-stream-name", "", "log stream name")
 	flag.StringVar(&region, "region", "", "aws region")
-	flag.IntVar(nil, "log-retention-days", 0, "If set to a number greater than zero, and newly create log group's retention policy is set to this many days.")
+	flag.IntVar(&logRetentionDays, "log-retention-days", 0, "Specifies the number of days you want to retain log events in the specified log group. Possible values are: 1, 3, 5, 7, 14, 30, 60, 90, 120, 150, 180, 365, 400, 545, 731, 1827, 3653")
 	flag.DurationVar(&interval, "flush-interval", time.Second, "flush interval to flush the logs")
 	flag.BoolVar(&showVersion, "version", false, "show the version")
 	flag.Parse()
@@ -47,6 +47,9 @@ func main() {
 	}
 	if groupName == "" {
 		log.Fatal("-log-group-name is required.")
+	}
+	if !isValidLogRetentionDays(logRetentionDays) {
+		log.Fatalf("invalid log retention days. Possible values are: 1, 3, 5, 7, 14, 30, 60, 90, 120, 150, 180, 365, 400, 545, 731, 1827, 3653: %d", logRetentionDays)
 	}
 	if streamName == "" {
 		streamName = generateStreamName(ctx)
@@ -159,4 +162,17 @@ func getAWSInstanceID(ctx context.Context) string {
 	}
 
 	return strings.TrimSpace(string(id))
+}
+
+func isValidLogRetentionDays(days int) bool {
+	validValues := [...]int{
+		0, // the default value: do not set log retention days
+		1, 3, 5, 7, 14, 30, 60, 90, 120, 150, 180, 365, 400, 545, 731, 1827, 3653,
+	}
+	for _, v := range validValues {
+		if days == v {
+			return true
+		}
+	}
+	return false
 }

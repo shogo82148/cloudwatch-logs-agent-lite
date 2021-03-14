@@ -14,6 +14,7 @@ type Mock struct {
 	CreateLogStreamFunc    func(ctx context.Context, params *cloudwatchlogs.CreateLogStreamInput, optFns ...func(*cloudwatchlogs.Options)) (*cloudwatchlogs.CreateLogStreamOutput, error)
 	DescribeLogStreamsFunc func(ctx context.Context, params *cloudwatchlogs.DescribeLogStreamsInput, optFns ...func(*cloudwatchlogs.Options)) (*cloudwatchlogs.DescribeLogStreamsOutput, error)
 	PutLogEventsFunc       func(ctx context.Context, params *cloudwatchlogs.PutLogEventsInput, optFns ...func(*cloudwatchlogs.Options)) (*cloudwatchlogs.PutLogEventsOutput, error)
+	PutRetentionPolicyFunc func(ctx context.Context, params *cloudwatchlogs.PutRetentionPolicyInput, optFns ...func(*cloudwatchlogs.Options)) (*cloudwatchlogs.PutRetentionPolicyOutput, error)
 }
 
 // CreateLogStream implements Interface.
@@ -34,4 +35,9 @@ func (m *Mock) DescribeLogStreams(ctx context.Context, params *cloudwatchlogs.De
 // PutLogEvents implements Interface.
 func (m *Mock) PutLogEvents(ctx context.Context, params *cloudwatchlogs.PutLogEventsInput, optFns ...func(*cloudwatchlogs.Options)) (*cloudwatchlogs.PutLogEventsOutput, error) {
 	return m.PutLogEventsFunc(ctx, params, optFns...)
+}
+
+// PutRetentionPolicy implements Interface.
+func (m *Mock) PutRetentionPolicy(ctx context.Context, params *cloudwatchlogs.PutRetentionPolicyInput, optFns ...func(*cloudwatchlogs.Options)) (*cloudwatchlogs.PutRetentionPolicyOutput, error) {
+	return m.PutRetentionPolicyFunc(ctx, params, optFns...)
 }

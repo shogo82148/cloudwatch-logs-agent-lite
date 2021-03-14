@@ -23,9 +23,10 @@ const (
 
 // Writer is a wrapper CloudWatch Logs that provids io.Writer interface.
 type Writer struct {
-	Config        aws.Config
-	LogGroupName  string
-	LogStreamName string
+	Config           aws.Config
+	LogGroupName     string
+	LogStreamName    string
+	LogRetentionDays int
 
 	logs              cloudwatchlogsiface.Interface
 	nextSequenceToken *string
@@ -235,6 +236,22 @@ func (w *Writer) createGroup(ctx context.Context) error {
 			// already created, just ignore
 			return nil
 		}
+		return err
+	}
+	return w.setLogGroupRetention(ctx)
+}
+
+func (w *Writer) setLogGroupRetention(ctx context.Context) error {
+	if w.LogRetentionDays == 0 {
+		return nil
+	}
+
+	logs := w.logsClient()
+	_, err := logs.PutRetentionPolicy(ctx, &cloudwatchlogs.PutRetentionPolicyInput{
+		LogGroupName:    &w.LogGroupName,
+		RetentionInDays: aws.Int32(int32(w.LogRetentionDays)),
+	})
+	if err != nil {
 		return err
 	}
 	return nil

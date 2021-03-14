@@ -108,3 +108,68 @@ func TestWriter_createGroup(t *testing.T) {
 		t.Errorf("unexpected timestamp: want %d, got %d", want, got)
 	}
 }
+
+func TestWriter_setLogGroupRetention(t *testing.T) {
+	var events []types.InputLogEvent
+	var logGroupName, logStreamName string
+	var retentionInDays int32
+	mockCloudWatch := &cloudwatchlogsiface.Mock{
+		PutLogEventsFunc: func(ctx context.Context, params *cloudwatchlogs.PutLogEventsInput, optFns ...func(*cloudwatchlogs.Options)) (*cloudwatchlogs.PutLogEventsOutput, error) {
+			if logGroupName != aws.ToString(params.LogGroupName) || logStreamName != aws.ToString(params.LogStreamName) {
+				return nil, &types.ResourceNotFoundException{}
+			}
+			events = append(events, params.LogEvents...)
+			return &cloudwatchlogs.PutLogEventsOutput{}, nil
+		},
+		CreateLogStreamFunc: func(ctx context.Context, params *cloudwatchlogs.CreateLogStreamInput, optFns ...func(*cloudwatchlogs.Options)) (*cloudwatchlogs.CreateLogStreamOutput, error) {
+			if logGroupName != aws.ToString(params.LogGroupName) {
+				return nil, &types.ResourceNotFoundException{}
+			}
+			logStreamName = *params.LogStreamName
+			return &cloudwatchlogs.CreateLogStreamOutput{}, nil
+		},
+		CreateLogGroupFunc: func(ctx context.Context, params *cloudwatchlogs.CreateLogGroupInput, optFns ...func(*cloudwatchlogs.Options)) (*cloudwatchlogs.CreateLogGroupOutput, error) {
+			logGroupName = aws.ToString(params.LogGroupName)
+			return &cloudwatchlogs.CreateLogGroupOutput{}, nil
+		},
+		PutRetentionPolicyFunc: func(ctx context.Context, params *cloudwatchlogs.PutRetentionPolicyInput, optFns ...func(*cloudwatchlogs.Options)) (*cloudwatchlogs.PutRetentionPolicyOutput, error) {
+			if aws.ToString(params.LogGroupName) != logGroupName {
+				return nil, &types.ResourceNotFoundException{}
+			}
+			retentionInDays = aws.ToInt32(params.RetentionInDays)
+			return &cloudwatchlogs.PutRetentionPolicyOutput{}, nil
+		},
+	}
+
+	w := &Writer{
+		LogGroupName:     testLogGroup,
+		LogStreamName:    testLogStream,
+		LogRetentionDays: 90,
+		logs:             mockCloudWatch,
+	}
+	now := time.Unix(1234567890, 0)
+	n, err := w.WriteEvent(now, "hello")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if n != len("hello") {
+		t.Errorf("want %d, got %d", len("hello"), n)
+	}
+	if err := w.Flush(); err != nil {
+		t.Fatal(err)
+	}
+
+	if got, want := retentionInDays, int32(90); got != want {
+		t.Errorf("unexpected timestamp: want %d, got %d", want, got)
+	}
+
+	if len(events) != 1 {
+		t.Fatalf("invalid length: want 1, got %d", len(events))
+	}
+	if got, want := aws.ToString(events[0].Message), "hello"; got != want {
+		t.Errorf("unexpected message: want %q, got %q", want, got)
+	}
+	if got, want := aws.ToInt64(events[0].Timestamp), int64(1234567890000); got != want {
+		t.Errorf("unexpected timestamp: want %d, got %d", want, got)
+	}
+}

@@ -39,5 +39,5 @@ func (m *Mock) PutLogEvents(ctx context.Context, params *cloudwatchlogs.PutLogEv
 
 // PutRetentionPolicy implements Interface.
 func (m *Mock) PutRetentionPolicy(ctx context.Context, params *cloudwatchlogs.PutRetentionPolicyInput, optFns ...func(*cloudwatchlogs.Options)) (*cloudwatchlogs.PutRetentionPolicyOutput, error) {
-	return m.PutRetentionPolicy(ctx, params, optFns...)
+	return m.PutRetentionPolicyFunc(ctx, params, optFns...)
 }

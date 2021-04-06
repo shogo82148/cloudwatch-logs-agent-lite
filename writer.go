@@ -47,8 +47,18 @@ func (w *Writer) Write(p []byte) (int, error) {
 	return w.WriteWithTime(time.Now(), p)
 }
 
+// WriteContext is same as Write, and it supports the context.
+func (w *Writer) WriteContext(ctx context.Context, p []byte) (int, error) {
+	return w.WriteWithTimeContext(ctx, time.Now(), p)
+}
+
 // WriteWithTime writes data with timestamp.
 func (w *Writer) WriteWithTime(now time.Time, p []byte) (int, error) {
+	return w.WriteWithTimeContext(context.Background(), now, p)
+}
+
+// WriteWithTimeContext writes data with timestamp.
+func (w *Writer) WriteWithTimeContext(ctx context.Context, now time.Time, p []byte) (int, error) {
 	var m int
 
 	// concat the remain and the first line
@@ -61,7 +71,7 @@ func (w *Writer) WriteWithTime(now time.Time, p []byte) (int, error) {
 		line := w.remain + string(p[:idx])
 		p = p[idx+1:]
 		w.remain = ""
-		n, err := w.WriteEvent(now, line)
+		n, err := w.WriteEventContext(ctx, now, line)
 		if err != nil {
 			return m, err
 		}
@@ -69,7 +79,7 @@ func (w *Writer) WriteWithTime(now time.Time, p []byte) (int, error) {
 		m++ // for '\n'
 	}
 
-	n, err := w.WriteStringWithTime(now, string(p))
+	n, err := w.WriteStringWithTimeContext(ctx, now, string(p))
 	if err != nil {
 		return m, err
 	}
@@ -78,11 +88,21 @@ func (w *Writer) WriteWithTime(now time.Time, p []byte) (int, error) {
 
 // WriteString writes a string.
 func (w *Writer) WriteString(s string) (int, error) {
-	return w.WriteStringWithTime(time.Now(), s)
+	return w.WriteStringWithTimeContext(context.Background(), time.Now(), s)
+}
+
+// WriteStringContext writes a string.
+func (w *Writer) WriteStringContext(ctx context.Context, s string) (int, error) {
+	return w.WriteStringWithTimeContext(ctx, time.Now(), s)
 }
 
 // WriteStringWithTime writes data with timestamp.
 func (w *Writer) WriteStringWithTime(now time.Time, s string) (int, error) {
+	return w.WriteStringWithTimeContext(context.Background(), now, s)
+}
+
+// WriteStringWithTimeContext writes data with timestamp.
+func (w *Writer) WriteStringWithTimeContext(ctx context.Context, now time.Time, s string) (int, error) {
 	var m int
 
 	// concat the remain and the first line
@@ -124,6 +144,11 @@ func (w *Writer) WriteStringWithTime(now time.Time, s string) (int, error) {
 
 // WriteEvent writes an log event.
 func (w *Writer) WriteEvent(now time.Time, message string) (int, error) {
+	return w.WriteEventContext(context.Background(), now, message)
+}
+
+// WriteEventContext writes an log event.
+func (w *Writer) WriteEventContext(ctx context.Context, now time.Time, message string) (int, error) {
 	if message == "" {
 		return 0, nil
 	}
@@ -131,7 +156,7 @@ func (w *Writer) WriteEvent(now time.Time, message string) (int, error) {
 	if w.currentByteLength+cloudwatchLen(message) >= maximumBytesPerPut {
 		// the byte length will be over the limit
 		// need flush before adding the new event.
-		if err := w.Flush(); err != nil {
+		if err := w.FlushContext(ctx); err != nil {
 			return 0, err
 		}
 	}
@@ -142,15 +167,20 @@ func (w *Writer) WriteEvent(now time.Time, message string) (int, error) {
 	})
 	if len(w.events) == maximumLogEventsPerPut {
 		// the count of events reaches the limit, need flush.
-		if err := w.Flush(); err != nil {
+		if err := w.FlushContext(ctx); err != nil {
 			return 0, err
 		}
 	}
 	return len(message), nil
 }
 
-// Flush flushes the logs to the AWS CloudWatch Logs.
+// Flush is same as FlushContext, but it doesn't support the context.
 func (w *Writer) Flush() error {
+	return w.FlushContext(context.Background())
+}
+
+// FlushContext flushes the logs to the AWS CloudWatch Logs.
+func (w *Writer) FlushContext(ctx context.Context) error {
 	events := w.events
 	w.events = nil
 	w.currentByteLength = 0
@@ -158,8 +188,6 @@ func (w *Writer) Flush() error {
 		return nil
 	}
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
 	err := w.putEvents(ctx, events)
 	if err != nil {
 		if awsErr := (*types.ResourceNotFoundException)(nil); errors.As(err, &awsErr) {

@@ -30,7 +30,7 @@ type Writer struct {
 
 	logs              cloudwatchlogsiface.Interface
 	nextSequenceToken *string
-	remain            string
+	remain            bytes.Buffer
 	events            []types.InputLogEvent
 	currentByteLength int
 }
@@ -62,15 +62,16 @@ func (w *Writer) WriteWithTimeContext(ctx context.Context, now time.Time, p []by
 	var m int
 
 	// concat the remain and the first line
-	if w.remain != "" {
+	if w.remain.Len() != 0 {
 		idx := bytes.IndexByte(p, '\n')
 		if idx < 0 {
-			w.remain += string(p)
+			w.remain.Write(p)
 			return len(p), nil
 		}
-		line := w.remain + string(p[:idx])
+		w.remain.Write(p[:idx])
+		line := w.remain.String()
 		p = p[idx+1:]
-		w.remain = ""
+		w.remain.Reset()
 		n, err := w.WriteEventContext(ctx, now, line)
 		if err != nil {
 			return m, err
@@ -79,11 +80,24 @@ func (w *Writer) WriteWithTimeContext(ctx context.Context, now time.Time, p []by
 		m++ // for '\n'
 	}
 
-	n, err := w.WriteStringWithTimeContext(ctx, now, string(p))
-	if err != nil {
-		return m, err
+	for len(p) > 0 {
+		idx := bytes.IndexByte(p, '\n')
+		if idx < 0 {
+			w.remain.Write(p)
+			m += len(p)
+			break
+		}
+		line := string(p[:idx])
+		p = p[idx+1:]
+		n, err := w.WriteEventContext(ctx, now, line)
+		if err != nil {
+			return m, err
+		}
+		m += n
+		m++ // for '\n'
 	}
-	return m + n, nil
+
+	return m, nil
 }
 
 // WriteString writes a string.
@@ -106,16 +120,17 @@ func (w *Writer) WriteStringWithTimeContext(ctx context.Context, now time.Time, 
 	var m int
 
 	// concat the remain and the first line
-	if w.remain != "" {
+	if w.remain.Len() != 0 {
 		idx := strings.IndexByte(s, '\n')
 		if idx < 0 {
-			w.remain += s
+			w.remain.WriteString(s)
 			return len(s), nil
 		}
-		line := w.remain + s[:idx]
+		w.remain.WriteString(s[:idx])
+		line := w.remain.String()
 		s = s[idx+1:]
-		w.remain = ""
-		n, err := w.WriteEvent(now, line)
+		w.remain.Reset()
+		n, err := w.WriteEventContext(ctx, now, line)
 		if err != nil {
 			return m, err
 		}
@@ -126,13 +141,13 @@ func (w *Writer) WriteStringWithTimeContext(ctx context.Context, now time.Time, 
 	for len(s) > 0 {
 		idx := strings.IndexByte(s, '\n')
 		if idx < 0 {
-			w.remain = s
+			w.remain.WriteString(s)
 			m += len(s)
 			break
 		}
 		line := s[:idx]
 		s = s[idx+1:]
-		n, err := w.WriteEvent(now, line)
+		n, err := w.WriteEventContext(ctx, now, line)
 		if err != nil {
 			return m, err
 		}
@@ -153,7 +168,9 @@ func (w *Writer) WriteEventContext(ctx context.Context, now time.Time, message s
 		return 0, nil
 	}
 
-	if w.currentByteLength+cloudwatchLen(message) >= maximumBytesPerPut {
+	l := cloudwatchLen(message)
+
+	if w.currentByteLength+l >= maximumBytesPerPut {
 		// the byte length will be over the limit
 		// need flush before adding the new event.
 		if err := w.FlushContext(ctx); err != nil {
@@ -165,6 +182,7 @@ func (w *Writer) WriteEventContext(ctx context.Context, now time.Time, message s
 		Message:   aws.String(message),
 		Timestamp: aws.Int64(now.Unix()*1000 + int64(now.Nanosecond()/1000000)),
 	})
+	w.currentByteLength += l
 	if len(w.events) == maximumLogEventsPerPut {
 		// the count of events reaches the limit, need flush.
 		if err := w.FlushContext(ctx); err != nil {
@@ -182,11 +200,11 @@ func (w *Writer) Flush() error {
 // FlushContext flushes the logs to the AWS CloudWatch Logs.
 func (w *Writer) FlushContext(ctx context.Context) error {
 	events := w.events
-	w.events = nil
-	w.currentByteLength = 0
 	if len(events) == 0 {
 		return nil
 	}
+	w.events = events[:0]
+	w.currentByteLength = 0
 
 	err := w.putEvents(ctx, events)
 	if err != nil {

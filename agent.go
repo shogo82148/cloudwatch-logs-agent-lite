@@ -34,7 +34,7 @@ type Agent struct {
 
 // Start starts log forwarding.
 func (a *Agent) Start() error {
-	a.lines = make(chan *tail.Line, 16)
+	a.lines = make(chan *tail.Line, maximumLogEventsPerPut)
 	a.errors = make(chan error, 1)
 	files := a.Files
 	if len(files) == 0 {

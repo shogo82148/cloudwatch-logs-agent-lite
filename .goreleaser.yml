@@ -102,3 +102,11 @@ blobs:
     bucket: shogo82148-rpm-temporary
     ids: [package-arm64]
     folder: centos/8/aarch64/cloudwatch-logs-agent-lite
+  - provider: s3
+    bucket: shogo82148-rpm-temporary
+    ids: [package-amd64]
+    folder: almalinux/8/x86_64/cloudwatch-logs-agent-lite
+  - provider: s3
+    bucket: shogo82148-rpm-temporary
+    ids: [package-arm64]
+    folder: almalinux/8/aarch64/cloudwatch-logs-agent-lite

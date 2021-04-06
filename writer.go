@@ -200,11 +200,11 @@ func (w *Writer) Flush() error {
 // FlushContext flushes the logs to the AWS CloudWatch Logs.
 func (w *Writer) FlushContext(ctx context.Context) error {
 	events := w.events
-	w.events = nil
-	w.currentByteLength = 0
 	if len(events) == 0 {
 		return nil
 	}
+	w.events = events[:0]
+	w.currentByteLength = 0
 
 	err := w.putEvents(ctx, events)
 	if err != nil {

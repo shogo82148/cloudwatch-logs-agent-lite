@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"strings"
+	"sync"
 	"time"
 	"unicode/utf8"
 
@@ -28,6 +29,7 @@ type Writer struct {
 	LogStreamName    string
 	LogRetentionDays int
 
+	mu                sync.Mutex
 	logs              cloudwatchlogsiface.Interface
 	nextSequenceToken *string
 	remain            string
@@ -36,6 +38,9 @@ type Writer struct {
 }
 
 func (w *Writer) logsClient() cloudwatchlogsiface.Interface {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+
 	if w.logs == nil {
 		w.logs = cloudwatchlogs.NewFromConfig(w.Config)
 	}

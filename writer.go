@@ -168,7 +168,9 @@ func (w *Writer) WriteEventContext(ctx context.Context, now time.Time, message s
 		return 0, nil
 	}
 
-	if w.currentByteLength+cloudwatchLen(message) >= maximumBytesPerPut {
+	l := cloudwatchLen(message)
+
+	if w.currentByteLength+l >= maximumBytesPerPut {
 		// the byte length will be over the limit
 		// need flush before adding the new event.
 		if err := w.FlushContext(ctx); err != nil {
@@ -180,6 +182,7 @@ func (w *Writer) WriteEventContext(ctx context.Context, now time.Time, message s
 		Message:   aws.String(message),
 		Timestamp: aws.Int64(now.Unix()*1000 + int64(now.Nanosecond()/1000000)),
 	})
+	w.currentByteLength += l
 	if len(w.events) == maximumLogEventsPerPut {
 		// the count of events reaches the limit, need flush.
 		if err := w.FlushContext(ctx); err != nil {

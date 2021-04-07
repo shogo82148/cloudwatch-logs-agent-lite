@@ -73,6 +73,7 @@ func (a *Agent) Close() error {
 				ferr = err
 			}
 		}
+		a.closeErr = ferr
 		a.wg.Wait()
 	})
 	return a.closeErr
@@ -137,6 +138,6 @@ LOOP:
 	}
 
 	if err := a.Writer.Close(); err != nil {
-		a.closeErr = err
+		log.Println("Error: ", err)
 	}
 }

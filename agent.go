@@ -65,6 +65,12 @@ func (a *Agent) Start() error {
 
 // Close stops log forwarding.
 func (a *Agent) Close() error {
+	err := a.closeTails()
+	a.wg.Wait()
+	return err
+}
+
+func (a *Agent) closeTails() error {
 	a.closeOnce.Do(func() {
 		var ferr error
 		for _, t := range a.tails {
@@ -74,7 +80,6 @@ func (a *Agent) Close() error {
 			}
 		}
 		a.closeErr = ferr
-		a.wg.Wait()
 	})
 	return a.closeErr
 }
@@ -123,6 +128,7 @@ LOOP:
 			text := strings.TrimSpace(line.Text)
 			_, err := a.WriteEvent(line.Time, text)
 			if err != nil {
+				a.closeTails()
 				log.Println("Error: ", err)
 			}
 		case err, ok := <-a.errors:
@@ -132,6 +138,7 @@ LOOP:
 		case <-flush:
 			err := a.Flush()
 			if err != nil {
+				a.closeTails()
 				log.Println("Error: ", err)
 			}
 		}

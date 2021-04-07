@@ -32,12 +32,14 @@ func main() {
 	var region string
 	var logRetentionDays int
 	var interval time.Duration
+	var timeout time.Duration
 	var showVersion bool
 	flag.StringVar(&groupName, "log-group-name", "", "log group name")
 	flag.StringVar(&streamName, "log-stream-name", "", "log stream name")
 	flag.StringVar(&region, "region", "", "aws region")
 	flag.IntVar(&logRetentionDays, "log-retention-days", 0, "Specifies the number of days you want to retain log events in the specified log group. Possible values are: 1, 3, 5, 7, 14, 30, 60, 90, 120, 150, 180, 365, 400, 545, 731, 1827, 3653")
-	flag.DurationVar(&interval, "flush-interval", time.Second, "flush interval to flush the logs")
+	flag.DurationVar(&interval, "flush-interval", time.Second, "interval to flush the logs")
+	flag.DurationVar(&timeout, "flush-timeout", 60*time.Second, "timeout to flush the logs")
 	flag.BoolVar(&showVersion, "version", false, "show the version")
 	flag.Parse()
 
@@ -74,12 +76,13 @@ func main() {
 		},
 		Files:         flag.Args(),
 		FlushInterval: interval,
+		FlushTimout:   timeout,
 	}
 	if err := a.Start(); err != nil {
 		log.Fatal("fail to start: ", err)
 	}
 
-	chwait := make(chan struct{}, 0)
+	chwait := make(chan struct{})
 	go func() {
 		a.Wait()
 		close(chwait)

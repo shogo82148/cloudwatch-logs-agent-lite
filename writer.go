@@ -319,7 +319,12 @@ func (w *Writer) getNextSequenceToken(ctx context.Context) error {
 
 // Close closes the Writer.
 func (w *Writer) Close() error {
-	return w.Flush()
+	return w.CloseContext(context.Background())
+}
+
+// CloseContexts closes the Writer.
+func (w *Writer) CloseContext(ctx context.Context) error {
+	return w.FlushContext(ctx)
 }
 
 // steal from https://github.com/aws/amazon-cloudwatch-logs-for-fluent-bit/blob/b5dc2e67047da375dd5327e5a2d9cf5a2436219a/cloudwatch/cloudwatch.go#L494-L509

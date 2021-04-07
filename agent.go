@@ -1,6 +1,7 @@
 package agent
 
 import (
+	"context"
 	"log"
 	"os"
 	"strings"
@@ -18,10 +19,15 @@ type Agent struct {
 	// If the length of Files is zero, the standard input is used.
 	Files []string
 
-	// FlushInterval specifies the flush interval
+	// FlushInterval specifies the interval
 	// to flush to the logs.
 	// If zero, no periodic flushing is done.
 	FlushInterval time.Duration
+
+	// FlushInterval specifies the timeout
+	// to flush to the logs.
+	// If zero, flushing is never timeout.
+	FlushTimout time.Duration
 
 	wg     sync.WaitGroup
 	tails  []*tail.Tail
@@ -126,7 +132,7 @@ LOOP:
 				break LOOP
 			}
 			text := strings.TrimSpace(line.Text)
-			_, err := a.WriteEvent(line.Time, text)
+			err := a.writeEventWithTimeout(line.Time, text)
 			if err != nil {
 				a.closeTails()
 				log.Println("Error: ", err)
@@ -136,7 +142,7 @@ LOOP:
 				log.Println("Error: ", err)
 			}
 		case <-flush:
-			err := a.Flush()
+			err := a.flushWithTimeout()
 			if err != nil {
 				a.closeTails()
 				log.Println("Error: ", err)
@@ -144,7 +150,33 @@ LOOP:
 		}
 	}
 
-	if err := a.Writer.Close(); err != nil {
+	if err := a.closeWithTimeout(); err != nil {
 		log.Println("Error: ", err)
 	}
+}
+
+func (a *Agent) timeoutContext() (context.Context, context.CancelFunc) {
+	if a.FlushTimout > 0 {
+		return context.WithTimeout(context.Background(), a.FlushTimout)
+	}
+	return context.Background(), func() {}
+}
+
+func (a *Agent) writeEventWithTimeout(now time.Time, text string) error {
+	ctx, cancel := a.timeoutContext()
+	defer cancel()
+	_, err := a.WriteEventContext(ctx, now, text)
+	return err
+}
+
+func (a *Agent) flushWithTimeout() error {
+	ctx, cancel := a.timeoutContext()
+	defer cancel()
+	return a.FlushContext(ctx)
+}
+
+func (a *Agent) closeWithTimeout() error {
+	ctx, cancel := a.timeoutContext()
+	defer cancel()
+	return a.CloseContext(ctx)
 }

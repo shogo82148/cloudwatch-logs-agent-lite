@@ -3,9 +3,7 @@ package agent
 import (
 	"context"
 	"os"
-	"path/filepath"
 	"testing"
-	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs"
@@ -14,17 +12,12 @@ import (
 )
 
 func TestAgent(t *testing.T) {
-	dir, err := os.MkdirTemp("", "cwlogs-lite-")
+	r, w, err := os.Pipe()
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer os.RemoveAll(dir)
-
-	filename := filepath.Join(dir, "hoge.log")
-	file, err := os.Create(filename)
-	if err != nil {
-		t.Fatal(err)
-	}
+	stdin = r
+	defer func() { stdin = os.Stdin }()
 
 	ch := make(chan types.InputLogEvent, 1)
 	mockCloudWatch := &cloudwatchlogsiface.Mock{
@@ -47,19 +40,16 @@ func TestAgent(t *testing.T) {
 			LogStreamName: testLogStream,
 			logs:          mockCloudWatch,
 		},
-		Files: []string{filename},
+		Files: []string{},
 	}
 	if err := a.Start(); err != nil {
 		t.Error(err)
 	}
 
-	// wait for starting tail
-	time.Sleep(time.Second)
-
-	if _, err := file.WriteString("testtest\n"); err != nil {
+	if _, err := w.WriteString("testtest\n"); err != nil {
 		t.Error(err)
 	}
-	if err := file.Close(); err != nil {
+	if err := w.Close(); err != nil {
 		t.Error(err)
 	}
 	if err := a.Close(); err != nil {

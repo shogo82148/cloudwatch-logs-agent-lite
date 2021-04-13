@@ -11,6 +11,9 @@ import (
 	tail "github.com/shogo82148/go-tail"
 )
 
+// for testing
+var stdin = os.Stdin
+
 // Agent is a CloudWatch Logs Agent Lite.
 type Agent struct {
 	*Writer
@@ -50,7 +53,7 @@ func (a *Agent) Start() error {
 		var t *tail.Tail
 		var err error
 		if f == "-" {
-			t, err = tail.NewTailReader(os.Stdin)
+			t, err = tail.NewTailReader(stdin)
 		} else {
 			t, err = tail.NewTailFile(f)
 		}

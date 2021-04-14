@@ -1,6 +1,7 @@
 package agent
 
 import (
+	"context"
 	"log"
 	"os"
 	"strings"
@@ -10,6 +11,9 @@ import (
 	tail "github.com/shogo82148/go-tail"
 )
 
+// for testing
+var stdin = os.Stdin
+
 // Agent is a CloudWatch Logs Agent Lite.
 type Agent struct {
 	*Writer
@@ -18,10 +22,15 @@ type Agent struct {
 	// If the length of Files is zero, the standard input is used.
 	Files []string
 
-	// FlushInterval specifies the flush interval
+	// FlushInterval specifies the interval
 	// to flush to the logs.
 	// If zero, no periodic flushing is done.
 	FlushInterval time.Duration
+
+	// FlushInterval specifies the timeout
+	// to flush to the logs.
+	// If zero, flushing is never timeout.
+	FlushTimout time.Duration
 
 	wg     sync.WaitGroup
 	tails  []*tail.Tail
@@ -44,7 +53,7 @@ func (a *Agent) Start() error {
 		var t *tail.Tail
 		var err error
 		if f == "-" {
-			t, err = tail.NewTailReader(os.Stdin)
+			t, err = tail.NewTailReader(stdin)
 		} else {
 			t, err = tail.NewTailFile(f)
 		}
@@ -65,6 +74,12 @@ func (a *Agent) Start() error {
 
 // Close stops log forwarding.
 func (a *Agent) Close() error {
+	err := a.closeTails()
+	a.wg.Wait()
+	return err
+}
+
+func (a *Agent) closeTails() error {
 	a.closeOnce.Do(func() {
 		var ferr error
 		for _, t := range a.tails {
@@ -73,7 +88,7 @@ func (a *Agent) Close() error {
 				ferr = err
 			}
 		}
-		a.wg.Wait()
+		a.closeErr = ferr
 	})
 	return a.closeErr
 }
@@ -120,8 +135,9 @@ LOOP:
 				break LOOP
 			}
 			text := strings.TrimSpace(line.Text)
-			_, err := a.WriteEvent(line.Time, text)
+			err := a.writeEventWithTimeout(line.Time, text)
 			if err != nil {
+				a.closeTails()
 				log.Println("Error: ", err)
 			}
 		case err, ok := <-a.errors:
@@ -129,14 +145,41 @@ LOOP:
 				log.Println("Error: ", err)
 			}
 		case <-flush:
-			err := a.Flush()
+			err := a.flushWithTimeout()
 			if err != nil {
+				a.closeTails()
 				log.Println("Error: ", err)
 			}
 		}
 	}
 
-	if err := a.Writer.Close(); err != nil {
-		a.closeErr = err
+	if err := a.closeWithTimeout(); err != nil {
+		log.Println("Error: ", err)
 	}
+}
+
+func (a *Agent) timeoutContext() (context.Context, context.CancelFunc) {
+	if a.FlushTimout > 0 {
+		return context.WithTimeout(context.Background(), a.FlushTimout)
+	}
+	return context.Background(), func() {}
+}
+
+func (a *Agent) writeEventWithTimeout(now time.Time, text string) error {
+	ctx, cancel := a.timeoutContext()
+	defer cancel()
+	_, err := a.WriteEventContext(ctx, now, text)
+	return err
+}
+
+func (a *Agent) flushWithTimeout() error {
+	ctx, cancel := a.timeoutContext()
+	defer cancel()
+	return a.FlushContext(ctx)
+}
+
+func (a *Agent) closeWithTimeout() error {
+	ctx, cancel := a.timeoutContext()
+	defer cancel()
+	return a.CloseContext(ctx)
 }

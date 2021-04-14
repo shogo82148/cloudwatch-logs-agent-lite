@@ -54,9 +54,6 @@ func TestAgent(t *testing.T) {
 		t.Error(err)
 	}
 
-	// wait for starting tailing
-	time.Sleep(time.Second)
-
 	// write some log messages and close
 	if _, err := w.WriteString("testtest\n"); err != nil {
 		t.Error(err)
@@ -64,19 +61,13 @@ func TestAgent(t *testing.T) {
 	if err := w.Close(); err != nil {
 		t.Error(err)
 	}
-
-	// closing the agent flushes the log buffer
-	if err := a.Close(); err != nil {
-		t.Error(err)
-	}
+	a.Wait()
 
 	// we will get the messages wrote
 	e := <-ch
 	if aws.ToString(e.Message) != "testtest" {
 		t.Errorf("want %q, got %q", "testtest", aws.ToString(e.Message))
 	}
-
-	a.Wait()
 }
 
 func TestAgent_FlushInterval(t *testing.T) {

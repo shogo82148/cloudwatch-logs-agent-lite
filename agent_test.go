@@ -19,7 +19,11 @@ func TestAgent(t *testing.T) {
 		t.Fatal(err)
 	}
 	stdin = r
-	defer func() { stdin = os.Stdin }()
+	defer func() {
+		stdin = os.Stdin
+		w.Close()
+		r.Close()
+	}()
 
 	ch := make(chan types.InputLogEvent, 1)
 	mockCloudWatch := &cloudwatchlogsiface.Mock{
@@ -79,7 +83,11 @@ func TestAgent_FlushInterval(t *testing.T) {
 		t.Fatal(err)
 	}
 	stdin = r
-	defer func() { stdin = os.Stdin }()
+	defer func() {
+		stdin = os.Stdin
+		w.Close()
+		r.Close()
+	}()
 
 	ch := make(chan types.InputLogEvent, 1)
 	mockCloudWatch := &cloudwatchlogsiface.Mock{
@@ -131,5 +139,50 @@ func TestAgent_FlushInterval(t *testing.T) {
 	if err := a.Close(); err != nil {
 		t.Error(err)
 	}
+	a.Wait()
+}
+
+func TestAgent_FlushTimeout(t *testing.T) {
+	// replace STDIN with a dummy pipe
+	r, w, err := os.Pipe()
+	if err != nil {
+		t.Fatal(err)
+	}
+	stdin = r
+	defer func() {
+		stdin = os.Stdin
+		w.Close()
+		r.Close()
+	}()
+
+	mockCloudWatch := &cloudwatchlogsiface.Mock{
+		// PutLogEventsFunc never succeed
+		PutLogEventsFunc: func(ctx context.Context, params *cloudwatchlogs.PutLogEventsInput, optFns ...func(*cloudwatchlogs.Options)) (*cloudwatchlogs.PutLogEventsOutput, error) {
+			<-ctx.Done() // wait for timeout or canceling
+			return nil, ctx.Err()
+		},
+	}
+
+	// start logging with the FlushInterval option
+	a := &Agent{
+		Writer: &Writer{
+			LogGroupName:  testLogGroup,
+			LogStreamName: testLogStream,
+			logs:          mockCloudWatch,
+		},
+		Files:         []string{},
+		FlushInterval: time.Second, // periodic flushing is enabled
+		FlushTimout:   time.Second,
+	}
+	if err := a.Start(); err != nil {
+		t.Error(err)
+	}
+
+	if _, err := w.WriteString("testtest\n"); err != nil {
+		t.Error(err)
+	}
+
+	// a.Wait() will return without a.Close()
+	// because flushing is failed
 	a.Wait()
 }

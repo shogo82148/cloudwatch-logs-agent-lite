@@ -54,6 +54,9 @@ func TestAgent(t *testing.T) {
 		t.Error(err)
 	}
 
+	// wait for starting tailing
+	time.Sleep(time.Second)
+
 	// write some log messages and close
 	if _, err := w.WriteString("testtest\n"); err != nil {
 		t.Error(err)

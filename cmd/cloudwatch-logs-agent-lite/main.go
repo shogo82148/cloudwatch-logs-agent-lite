@@ -6,7 +6,7 @@ import (
 	"encoding/hex"
 	"flag"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"os"
 	"os/signal"
@@ -159,7 +159,7 @@ func getAWSInstanceID(ctx context.Context) string {
 		return ""
 	}
 	defer out.Content.Close()
-	id, err := ioutil.ReadAll(out.Content)
+	id, err := io.ReadAll(out.Content)
 	if err != nil {
 		return ""
 	}

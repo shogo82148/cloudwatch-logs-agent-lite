@@ -5,8 +5,9 @@ github.com/aws/aws-sdk-go-v2/config v1.1.6 h1:tg8KyxrxDt1CrYmZXWs9lc6IFE1yxtk9kn
 github.com/aws/aws-sdk-go-v2/config v1.1.6/go.mod h1:Kx90DDOgkMpRfSkzGbF13AVXHHfBNct1liO+95KxXsU=
 github.com/aws/aws-sdk-go-v2/credentials v1.1.6 h1:efaeh6FsO/jzyJ+U4ZxduKC6rRJDrUpu+Z0k5+guqHo=
 github.com/aws/aws-sdk-go-v2/credentials v1.1.6/go.mod h1:q1wQ5jHdFNhc4wnNcOEpnovs4keJA5Ds+qESCnfEsgU=
-github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.0.6 h1:zoOz5V56jO/rGixsCDnrQtAzYRYM2hGA/43U6jVMFbo=
 github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.0.6/go.mod h1:0+fWMitrmIpENiY8/1DyhdYPUCAPvd9UNz9mtCsEoLQ=
+github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.0.7 h1:WdPPgbL9Kl4UrEdiy6IdQioPuXSBg8HJcU9eihiCWOE=
+github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.0.7/go.mod h1:51hY5nMAiL2EF8ny/pFovWYoKZTcEfOw0WWKcq2E9AQ=
 github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs v1.2.3 h1:Nndr+JIWrHV7VZOYPvRfI0teEDxRXQuZ/IsPalo8Zg0=
 github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs v1.2.3/go.mod h1:SMDBeigW7S6RmOMSAwbukEb5JM5WHwUOvNOzZXDXRR4=
 github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.0.6 h1:ldYIsOP4WyjdzW8t6RC/aSieajrlx+3UN3UCZy1KM5Y=

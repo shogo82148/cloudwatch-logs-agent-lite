@@ -120,6 +120,32 @@ func (a *Agent) runTail(t *tail.Tail) {
 func (a *Agent) runForward() {
 	defer a.wg.Done()
 
+LOOP1:
+	for {
+		select {
+		case line, ok := <-a.lines:
+			if !ok {
+				break LOOP1
+			}
+			text := strings.TrimSpace(line.Text)
+			err := a.writeEventWithTimeout(line.Time, text)
+			if err == nil {
+				err = a.flushWithTimeout()
+			}
+			if err != nil {
+				log.Println("Error: writing the first log failed:", err)
+				log.Println("Your configuration might be wrong. So I can't continue to forward logs.")
+				log.Println("Please check it.")
+				a.closeTails()
+			}
+			break LOOP1
+		case err, ok := <-a.errors:
+			if ok {
+				log.Println("Error: reading files failed:", err)
+			}
+		}
+	}
+
 	var flush <-chan time.Time
 	if a.FlushInterval > 0 {
 		ticker := time.NewTicker(a.FlushInterval)
@@ -127,34 +153,36 @@ func (a *Agent) runForward() {
 		flush = ticker.C
 	}
 
-LOOP:
+LOOP2:
 	for {
 		select {
 		case line, ok := <-a.lines:
 			if !ok {
-				break LOOP
+				break LOOP2
 			}
 			text := strings.TrimSpace(line.Text)
 			err := a.writeEventWithTimeout(line.Time, text)
 			if err != nil {
-				a.closeTails()
-				log.Println("Error: ", err)
+				log.Println("Error: writing logs failed:", err)
+				// I guess it is a temporary error, because writing logs have succeeded at least once.
+				// so continue to continue to forward logs.
 			}
 		case err, ok := <-a.errors:
 			if ok {
-				log.Println("Error: ", err)
+				log.Println("Error: reading files failed:", err)
 			}
 		case <-flush:
 			err := a.flushWithTimeout()
 			if err != nil {
-				a.closeTails()
-				log.Println("Error: ", err)
+				log.Println("Error: periodic flushing failed:", err)
+				// I guess it is a temporary error, because writing logs have succeeded at least once.
+				// so continue to continue to forward logs.
 			}
 		}
 	}
 
 	if err := a.closeWithTimeout(); err != nil {
-		log.Println("Error: ", err)
+		log.Println("Error: closing the writer failed:", err)
 	}
 }
 

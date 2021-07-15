@@ -233,7 +233,7 @@ func TestAgent_FlushTimeout(t *testing.T) {
 				t.Error(err)
 			}
 			time.Sleep(3 * time.Second)
-			a.Close()
+			w.Close()
 		}()
 
 		ch2 := make(chan struct{})

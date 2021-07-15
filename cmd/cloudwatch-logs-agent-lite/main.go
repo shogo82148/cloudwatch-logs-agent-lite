@@ -21,7 +21,7 @@ import (
 	agent "github.com/shogo82148/cloudwatch-logs-agent-lite"
 )
 
-// these variable is set by goreleaser
+// the version is set by goreleaser
 var version = "" // .Version
 
 func main() {

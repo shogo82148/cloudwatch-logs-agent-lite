@@ -11,6 +11,7 @@ import (
 	"os"
 	"os/signal"
 	"runtime"
+	"runtime/debug"
 	"strings"
 	"syscall"
 	"time"
@@ -20,9 +21,8 @@ import (
 	agent "github.com/shogo82148/cloudwatch-logs-agent-lite"
 )
 
-// these variable is set by goreleaser
-var version = "main" // .Version
-var commit = "HEAD"  // .ShortCommit
+// the version is set by goreleaser
+var version = "" // .Version
 
 func main() {
 	ctx, cancel := context.WithCancel(context.Background())
@@ -44,7 +44,7 @@ func main() {
 	flag.Parse()
 
 	if showVersion {
-		fmt.Printf("cloudwatch-logs-agent-lite version %s (rev %s) %s/%s (built by %s)\n", version, commit, runtime.GOOS, runtime.GOARCH, runtime.Version())
+		fmt.Printf("cloudwatch-logs-agent-lite version %s %s/%s (built by %s)\n", getVersion(), runtime.GOOS, runtime.GOARCH, runtime.Version())
 		return
 	}
 	if groupName == "" {
@@ -178,4 +178,15 @@ func isValidLogRetentionDays(days int) bool {
 		}
 	}
 	return false
+}
+
+func getVersion() string {
+	if version != "" {
+		return version
+	}
+	info, ok := debug.ReadBuildInfo()
+	if !ok {
+		return "unknown"
+	}
+	return info.Main.Version
 }

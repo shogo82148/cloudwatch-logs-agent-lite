@@ -16,6 +16,8 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/aws/retry"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/feature/ec2/imds"
 	agent "github.com/shogo82148/cloudwatch-logs-agent-lite"
@@ -57,10 +59,15 @@ func main() {
 		streamName = generateStreamName(ctx)
 	}
 
-	opts := []func(*config.LoadOptions) error{}
+	opts := make([]func(*config.LoadOptions) error, 0, 2)
 	if region != "" {
 		opts = append(opts, config.WithRegion(region))
 	}
+
+	// retry more harder
+	opts = append(opts, config.WithRetryer(func() aws.Retryer {
+		return retry.AddWithMaxAttempts(retry.NewStandard(), 10)
+	}))
 
 	cfg, err := config.LoadDefaultConfig(ctx, opts...)
 	if err != nil {

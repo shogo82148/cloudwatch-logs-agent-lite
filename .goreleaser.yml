@@ -17,7 +17,6 @@ builds:
     ldflags:
       - -s -w
       - -X main.version={{.Version}}
-      - -X main.commit={{.ShortCommit}}
   - id: "cli-arm64"
     env:
       - CGO_ENABLED=0
@@ -31,7 +30,6 @@ builds:
     ldflags:
       - -s -w
       - -X main.version={{.Version}}
-      - -X main.commit={{.ShortCommit}}
 archives:
   - builds:
       - cli-amd64

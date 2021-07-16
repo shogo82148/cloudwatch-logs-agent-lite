@@ -137,46 +137,116 @@ func TestAgent_FlushInterval(t *testing.T) {
 }
 
 func TestAgent_FlushTimeout(t *testing.T) {
-	// replace STDIN with a dummy pipe
-	r, w, err := os.Pipe()
-	if err != nil {
-		t.Fatal(err)
-	}
-	stdin = r
-	defer func() {
-		stdin = os.Stdin
-		w.Close()
-		r.Close()
-	}()
+	t.Run("The first error stops log forwarding", func(t *testing.T) {
+		// replace STDIN with a dummy pipe
+		r, w, err := os.Pipe()
+		if err != nil {
+			t.Fatal(err)
+		}
+		stdin = r
+		defer func() {
+			stdin = os.Stdin
+			w.Close()
+			r.Close()
+		}()
 
-	mockCloudWatch := &cloudwatchlogsiface.Mock{
-		// PutLogEventsFunc never succeed
-		PutLogEventsFunc: func(ctx context.Context, params *cloudwatchlogs.PutLogEventsInput, optFns ...func(*cloudwatchlogs.Options)) (*cloudwatchlogs.PutLogEventsOutput, error) {
-			<-ctx.Done() // wait for timeout or canceling
-			return nil, ctx.Err()
-		},
-	}
+		mockCloudWatch := &cloudwatchlogsiface.Mock{
+			// PutLogEventsFunc never succeed
+			PutLogEventsFunc: func(ctx context.Context, params *cloudwatchlogs.PutLogEventsInput, optFns ...func(*cloudwatchlogs.Options)) (*cloudwatchlogs.PutLogEventsOutput, error) {
+				<-ctx.Done() // wait for timeout or canceling
+				return nil, ctx.Err()
+			},
+		}
 
-	// start logging with the FlushInterval option
-	a := &Agent{
-		Writer: &Writer{
-			LogGroupName:  testLogGroup,
-			LogStreamName: testLogStream,
-			logs:          mockCloudWatch,
-		},
-		Files:         []string{},
-		FlushInterval: time.Second, // periodic flushing is enabled
-		FlushTimout:   time.Second,
-	}
-	if err := a.Start(); err != nil {
-		t.Error(err)
-	}
+		// start logging with the FlushInterval option
+		a := &Agent{
+			Writer: &Writer{
+				LogGroupName:  testLogGroup,
+				LogStreamName: testLogStream,
+				logs:          mockCloudWatch,
+			},
+			Files:         []string{},
+			FlushInterval: time.Second, // periodic flushing is enabled
+			FlushTimout:   time.Second,
+		}
+		if err := a.Start(); err != nil {
+			t.Error(err)
+		}
 
-	if _, err := w.WriteString("testtest\n"); err != nil {
-		t.Error(err)
-	}
+		if _, err := w.WriteString("testtest\n"); err != nil {
+			t.Error(err)
+		}
 
-	// a.Wait() will return without a.Close()
-	// because flushing is failed
-	a.Wait()
+		// a.Wait() will return without a.Close()
+		// because flushing is failed
+		a.Wait()
+	})
+
+	t.Run("If it succeeds once, the error doesn't stop log forwarding", func(t *testing.T) {
+		// replace STDIN with a dummy pipe
+		r, w, err := os.Pipe()
+		if err != nil {
+			t.Fatal(err)
+		}
+		stdin = r
+		defer func() {
+			stdin = os.Stdin
+			w.Close()
+			r.Close()
+		}()
+
+		var flushCount int
+		mockCloudWatch := &cloudwatchlogsiface.Mock{
+			// PutLogEventsFunc never succeed
+			PutLogEventsFunc: func(ctx context.Context, params *cloudwatchlogs.PutLogEventsInput, optFns ...func(*cloudwatchlogs.Options)) (*cloudwatchlogs.PutLogEventsOutput, error) {
+				flushCount++
+				if flushCount == 1 {
+					return &cloudwatchlogs.PutLogEventsOutput{}, nil
+				}
+				<-ctx.Done() // wait for timeout or canceling
+				return nil, ctx.Err()
+			},
+		}
+
+		// start logging with the FlushInterval option
+		a := &Agent{
+			Writer: &Writer{
+				LogGroupName:  testLogGroup,
+				LogStreamName: testLogStream,
+				logs:          mockCloudWatch,
+			},
+			Files:         []string{},
+			FlushInterval: time.Second, // periodic flushing is enabled
+			FlushTimout:   time.Second,
+		}
+		if err := a.Start(); err != nil {
+			t.Error(err)
+		}
+
+		ch1 := make(chan struct{})
+		go func() {
+			defer close(ch1)
+			if _, err := w.WriteString("testtest\n"); err != nil {
+				t.Error(err)
+			}
+			if _, err := w.WriteString("testtest\n"); err != nil {
+				t.Error(err)
+			}
+			time.Sleep(3 * time.Second)
+			w.Close()
+		}()
+
+		ch2 := make(chan struct{})
+		go func() {
+			defer close(ch2)
+			a.Wait()
+		}()
+
+		select {
+		case <-ch1:
+			<-ch2
+		case <-ch2:
+			t.Error("Log forwarding stopped unexpectedly")
+		}
+	})
 }

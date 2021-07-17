@@ -40,7 +40,7 @@ func main() {
 	flag.StringVar(&streamName, "log-stream-name", "", "log stream name")
 	flag.StringVar(&region, "region", "", "aws region")
 	flag.IntVar(&logRetentionDays, "log-retention-days", 0, "Specifies the number of days you want to retain log events in the specified log group. Possible values are: 1, 3, 5, 7, 14, 30, 60, 90, 120, 150, 180, 365, 400, 545, 731, 1827, 3653")
-	flag.DurationVar(&interval, "flush-interval", time.Second, "interval to flush the logs")
+	flag.DurationVar(&interval, "flush-interval", 5*time.Second, "interval to flush the logs")
 	flag.DurationVar(&timeout, "flush-timeout", 60*time.Second, "timeout to flush the logs")
 	flag.BoolVar(&showVersion, "version", false, "show the version")
 	flag.Parse()

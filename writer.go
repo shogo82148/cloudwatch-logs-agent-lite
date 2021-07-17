@@ -65,19 +65,22 @@ func (w *Writer) WriteWithTimeContext(ctx context.Context, now time.Time, p []by
 	if w.remain.Len() != 0 {
 		idx := bytes.IndexByte(p, '\n')
 		if idx < 0 {
-			w.remain.Write(p)
-			return len(p), nil
+			return w.remain.Write(p)
 		}
-		w.remain.Write(p[:idx])
+
+		// bytes.Buffer never return any error.
+		// so we don't need to check it.
+		n, _ := w.remain.Write(p[:idx])
+		m += n
+		m++ // for '\n'
+
 		line := w.remain.String()
 		p = p[idx+1:]
 		w.remain.Reset()
-		n, err := w.WriteEventContext(ctx, now, line)
+		_, err := w.WriteEventContext(ctx, now, line)
 		if err != nil {
 			return m, err
 		}
-		m += n
-		m++ // for '\n'
 	}
 
 	for len(p) > 0 {
@@ -123,19 +126,22 @@ func (w *Writer) WriteStringWithTimeContext(ctx context.Context, now time.Time, 
 	if w.remain.Len() != 0 {
 		idx := strings.IndexByte(s, '\n')
 		if idx < 0 {
-			w.remain.WriteString(s)
-			return len(s), nil
+			return w.remain.WriteString(s)
 		}
-		w.remain.WriteString(s[:idx])
+
+		// bytes.Buffer never return any error.
+		// so we don't need to check it.
+		n, _ := w.remain.WriteString(s[:idx])
+		m += n
+		m++ // for '\n'
+
 		line := w.remain.String()
 		s = s[idx+1:]
 		w.remain.Reset()
-		n, err := w.WriteEventContext(ctx, now, line)
+		_, err := w.WriteEventContext(ctx, now, line)
 		if err != nil {
 			return m, err
 		}
-		m += n
-		m++ // for '\n'
 	}
 
 	for len(s) > 0 {

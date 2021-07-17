@@ -2,12 +2,14 @@ package agent
 
 import (
 	"context"
+	"io"
 	"testing"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs"
 	"github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs/types"
+	"github.com/google/go-cmp/cmp"
 	cloudwatchlogsiface "github.com/shogo82148/cloudwatch-logs-agent-lite/internal/cloudwatchlogs"
 )
 
@@ -15,6 +17,91 @@ const (
 	testLogGroup  = "my-logs"
 	testLogStream = "my-stream"
 )
+
+var _ io.WriteCloser = (*Writer)(nil)
+var _ io.StringWriter = (*Writer)(nil)
+
+var inputs = []string{
+	"single line\n",
+	"multi line 1\nmulti line 2\nmulti line 3\n",
+	"continuous line 1", "continuous line 2", "continuous line 3\n",
+}
+
+var output = []string{
+	"single line",
+	"multi line 1",
+	"multi line 2",
+	"multi line 3",
+	"continuous line 1continuous line 2continuous line 3",
+}
+
+func TestWriter_Write(t *testing.T) {
+	var events []string
+	mockCloudWatch := &cloudwatchlogsiface.Mock{
+		PutLogEventsFunc: func(ctx context.Context, params *cloudwatchlogs.PutLogEventsInput, optFns ...func(*cloudwatchlogs.Options)) (*cloudwatchlogs.PutLogEventsOutput, error) {
+			for _, event := range params.LogEvents {
+				events = append(events, aws.ToString(event.Message))
+			}
+			return &cloudwatchlogs.PutLogEventsOutput{}, nil
+		},
+	}
+	w := &Writer{
+		LogGroupName:  testLogGroup,
+		LogStreamName: testLogStream,
+		logs:          mockCloudWatch,
+	}
+
+	for _, input := range inputs {
+		n, err := w.Write([]byte(input))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if n != len(input) {
+			t.Errorf("unexpected wrote bytes: input: %q, want %d, got %d", input, len(input), n)
+		}
+	}
+	if err := w.Flush(); err != nil {
+		t.Fatal(err)
+	}
+
+	if diff := cmp.Diff(output, events); diff != "" {
+		t.Errorf("unexpected evenets (-want/+got):\n%s", diff)
+	}
+}
+
+func TestWriter_WriteString(t *testing.T) {
+	var events []string
+	mockCloudWatch := &cloudwatchlogsiface.Mock{
+		PutLogEventsFunc: func(ctx context.Context, params *cloudwatchlogs.PutLogEventsInput, optFns ...func(*cloudwatchlogs.Options)) (*cloudwatchlogs.PutLogEventsOutput, error) {
+			for _, event := range params.LogEvents {
+				events = append(events, aws.ToString(event.Message))
+			}
+			return &cloudwatchlogs.PutLogEventsOutput{}, nil
+		},
+	}
+	w := &Writer{
+		LogGroupName:  testLogGroup,
+		LogStreamName: testLogStream,
+		logs:          mockCloudWatch,
+	}
+
+	for _, input := range inputs {
+		n, err := w.WriteString(input)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if n != len(input) {
+			t.Errorf("unexpected wrote bytes: input: %q, want %d, got %d", input, len(input), n)
+		}
+	}
+	if err := w.Flush(); err != nil {
+		t.Fatal(err)
+	}
+
+	if diff := cmp.Diff(output, events); diff != "" {
+		t.Errorf("unexpected evenets (-want/+got):\n%s", diff)
+	}
+}
 
 func TestWriter_WriteEvent(t *testing.T) {
 	var events []types.InputLogEvent

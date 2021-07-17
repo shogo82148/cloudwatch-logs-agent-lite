@@ -23,6 +23,12 @@ import (
 	agent "github.com/shogo82148/cloudwatch-logs-agent-lite"
 )
 
+// we want to collect as many logs as possible, so do more retries.
+const maxAttempts = 10
+
+// api calls should not take more defaultTimeout, even if they retry.
+const defaultTimeout = retry.DefaultMaxBackoff * (maxAttempts - 1)
+
 // the version is set by goreleaser
 var version = "" // .Version
 
@@ -41,7 +47,7 @@ func main() {
 	flag.StringVar(&region, "region", "", "aws region")
 	flag.IntVar(&logRetentionDays, "log-retention-days", 0, "Specifies the number of days you want to retain log events in the specified log group. Possible values are: 1, 3, 5, 7, 14, 30, 60, 90, 120, 150, 180, 365, 400, 545, 731, 1827, 3653")
 	flag.DurationVar(&interval, "flush-interval", 5*time.Second, "interval to flush the logs")
-	flag.DurationVar(&timeout, "flush-timeout", 60*time.Second, "timeout to flush the logs")
+	flag.DurationVar(&timeout, "flush-timeout", defaultTimeout, "timeout to flush the logs")
 	flag.BoolVar(&showVersion, "version", false, "show the version")
 	flag.Parse()
 
@@ -64,9 +70,9 @@ func main() {
 		opts = append(opts, config.WithRegion(region))
 	}
 
-	// retry more harder
+	// overwrite max attempts of retry
 	opts = append(opts, config.WithRetryer(func() aws.Retryer {
-		return retry.AddWithMaxAttempts(retry.NewStandard(), 10)
+		return retry.AddWithMaxAttempts(retry.NewStandard(), maxAttempts)
 	}))
 
 	cfg, err := config.LoadDefaultConfig(ctx, opts...)

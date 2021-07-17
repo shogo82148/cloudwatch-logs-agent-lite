@@ -102,16 +102,33 @@ func (a *Agent) runTail(t *tail.Tail) {
 	defer a.wg.Done()
 	defer close(a.errors)
 	defer close(a.lines)
+
+	ticker := time.NewTicker(time.Second)
+	defer ticker.Stop()
+
+	var dropped uint64
+	errors := t.Errors
 	for {
 		select {
 		case line, ok := <-t.Lines:
 			if !ok {
 				return
 			}
-			a.lines <- line
-		case err, ok := <-t.Errors:
-			if ok {
-				a.errors <- err
+			select {
+			case a.lines <- line:
+			default:
+				dropped++
+			}
+		case err, ok := <-errors:
+			if !ok {
+				errors = nil
+				break
+			}
+			a.errors <- err
+		case <-ticker.C:
+			if dropped != 0 {
+				log.Printf("Warning: %d line(s) are dropped", dropped)
+				dropped = 0
 			}
 		}
 	}

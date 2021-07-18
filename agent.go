@@ -191,7 +191,7 @@ LOOP2:
 		case <-flush:
 			// check whether the logs are flushed recently
 			flushed := a.LastFlushedTime()
-			if flushed.IsZero() || time.Since(flushed) < a.FlushInterval {
+			if flushed.IsZero() || time.Since(flushed) >= a.FlushInterval {
 				// the logs aren't flushed recently, we need to flush.
 				log.Println("[DEBUG] periodic flushing")
 				err := a.flushWithTimeout()

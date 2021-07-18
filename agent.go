@@ -181,7 +181,7 @@ LOOP2:
 			err := a.writeEventWithTimeout(line.Time, text)
 			if err != nil {
 				log.Println("Error: writing logs failed:", err)
-				// I guess it is a temporary error, because writing logs have succeeded at least once.
+				// We guess it is a temporary error, because writing logs have succeeded at least once.
 				// so continue to continue to forward logs.
 			}
 		case err, ok := <-a.errors:
@@ -189,11 +189,16 @@ LOOP2:
 				log.Println("Error: reading files failed:", err)
 			}
 		case <-flush:
-			err := a.flushWithTimeout()
-			if err != nil {
-				log.Println("Error: periodic flushing failed:", err)
-				// I guess it is a temporary error, because writing logs have succeeded at least once.
-				// so continue to continue to forward logs.
+			// check whether the logs are flushed recently
+			flushed := a.LastFlushedTime()
+			if flushed.IsZero() || time.Since(flushed) < a.FlushInterval {
+				// the logs aren't flushed recently, we need to flush.
+				err := a.flushWithTimeout()
+				if err != nil {
+					log.Println("Error: periodic flushing failed:", err)
+					// We guess it is a temporary error, because writing logs have succeeded at least once.
+					// so continue to continue to forward logs.
+				}
 			}
 		}
 	}

@@ -33,6 +33,8 @@ type Writer struct {
 	remain            bytes.Buffer
 	events            []types.InputLogEvent
 	currentByteLength int
+	lastWroteTime     time.Time
+	lastFlushedTime   time.Time
 }
 
 func (w *Writer) logsClient() cloudwatchlogsiface.Interface {
@@ -44,7 +46,7 @@ func (w *Writer) logsClient() cloudwatchlogsiface.Interface {
 
 // Write implements io.Writer interface.
 func (w *Writer) Write(p []byte) (int, error) {
-	return w.WriteWithTime(time.Now(), p)
+	return w.WriteWithTimeContext(context.Background(), time.Now(), p)
 }
 
 // WriteContext is same as Write, and it supports the context.
@@ -174,6 +176,9 @@ func (w *Writer) WriteEventContext(ctx context.Context, now time.Time, message s
 		return 0, nil
 	}
 
+	if w.lastWroteTime.IsZero() || w.lastWroteTime.After(now) {
+		w.lastWroteTime = now
+	}
 	l := cloudwatchLen(message)
 
 	if w.currentByteLength+l >= maximumBytesPerPut {
@@ -209,6 +214,9 @@ func (w *Writer) FlushContext(ctx context.Context) error {
 	if len(events) == 0 {
 		return nil
 	}
+	if w.lastFlushedTime.IsZero() || w.lastFlushedTime.After(w.lastWroteTime) {
+		w.lastFlushedTime = w.lastWroteTime
+	}
 	w.events = events[:0]
 	w.currentByteLength = 0
 
@@ -234,6 +242,11 @@ func (w *Writer) FlushContext(ctx context.Context) error {
 		return err
 	}
 	return nil
+}
+
+// LastFlushedTime returns the timestamp of the event most recently putted.
+func (w *Writer) LastFlushedTime() time.Time {
+	return w.lastFlushedTime
 }
 
 func (w *Writer) putEvents(ctx context.Context, events []types.InputLogEvent) error {

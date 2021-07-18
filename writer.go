@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"log"
 	"strings"
 	"time"
 	"unicode/utf8"
@@ -250,6 +251,7 @@ func (w *Writer) LastFlushedTime() time.Time {
 }
 
 func (w *Writer) putEvents(ctx context.Context, events []types.InputLogEvent) error {
+	log.Printf("[DEBUG] putting %d events", len(events))
 	logs := w.logsClient()
 	resp, err := logs.PutLogEvents(ctx, &cloudwatchlogs.PutLogEventsInput{
 		LogEvents:     events,
@@ -266,6 +268,7 @@ func (w *Writer) putEvents(ctx context.Context, events []types.InputLogEvent) er
 }
 
 func (w *Writer) createStream(ctx context.Context, tryToCreateGroup bool) error {
+	log.Printf("[DEBUG] try to create stream: group name: %s, stream name: %s", w.LogGroupName, w.LogStreamName)
 	logs := w.logsClient()
 	_, err := logs.CreateLogStream(ctx, &cloudwatchlogs.CreateLogStreamInput{
 		LogGroupName:  &w.LogGroupName,
@@ -292,6 +295,7 @@ func (w *Writer) createStream(ctx context.Context, tryToCreateGroup bool) error 
 }
 
 func (w *Writer) createGroup(ctx context.Context) error {
+	log.Printf("[DEBUG] try to create log group: group name: %s", w.LogGroupName)
 	logs := w.logsClient()
 	_, err := logs.CreateLogGroup(ctx, &cloudwatchlogs.CreateLogGroupInput{
 		LogGroupName: &w.LogGroupName,
@@ -299,6 +303,7 @@ func (w *Writer) createGroup(ctx context.Context) error {
 	if err != nil {
 		if awsErr := (*types.ResourceAlreadyExistsException)(nil); errors.As(err, &awsErr) {
 			// already created, just ignore
+			log.Printf("[DEBUG] group name %s is already created", w.LogGroupName)
 			return nil
 		}
 		return err
@@ -311,6 +316,7 @@ func (w *Writer) setLogGroupRetention(ctx context.Context) error {
 		return nil
 	}
 
+	log.Printf("[DEBUG] putting log retention policy: group name: %s, retention in days: %d", w.LogGroupName, w.LogRetentionDays)
 	logs := w.logsClient()
 	_, err := logs.PutRetentionPolicy(ctx, &cloudwatchlogs.PutRetentionPolicyInput{
 		LogGroupName:    &w.LogGroupName,
@@ -323,6 +329,7 @@ func (w *Writer) setLogGroupRetention(ctx context.Context) error {
 }
 
 func (w *Writer) getNextSequenceToken(ctx context.Context) error {
+	log.Printf("[DEBUG] getting next sequence token: group name: %s, stream name: %s", w.LogGroupName, w.LogStreamName)
 	logs := w.logsClient()
 	resp, err := logs.DescribeLogStreams(ctx, &cloudwatchlogs.DescribeLogStreamsInput{
 		LogGroupName:        &w.LogGroupName,
@@ -332,6 +339,10 @@ func (w *Writer) getNextSequenceToken(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+	log.Printf(
+		"[DEBUG] next sequence token is %q : group name: %s, stream name: %s",
+		aws.ToString(w.nextSequenceToken), w.LogGroupName, w.LogStreamName,
+	)
 	w.nextSequenceToken = resp.LogStreams[0].UploadSequenceToken
 	return nil
 }

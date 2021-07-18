@@ -20,8 +20,17 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws/retry"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/feature/ec2/imds"
+	"github.com/hashicorp/logutils"
 	agent "github.com/shogo82148/cloudwatch-logs-agent-lite"
 )
+
+var defaultLogLevel string = "info"
+
+func init() {
+	if level := os.Getenv("CLOUDWATCH_LOG_LEVEL"); level != "" {
+		defaultLogLevel = level
+	}
+}
 
 // we want to collect as many logs as possible, so do more retries.
 const maxAttempts = 10
@@ -41,6 +50,7 @@ func main() {
 	var logRetentionDays int
 	var interval time.Duration
 	var timeout time.Duration
+	var logLevel string
 	var showVersion bool
 	flag.StringVar(&groupName, "log-group-name", "", "log group name")
 	flag.StringVar(&streamName, "log-stream-name", "", "log stream name")
@@ -48,18 +58,27 @@ func main() {
 	flag.IntVar(&logRetentionDays, "log-retention-days", 0, "Specifies the number of days you want to retain log events in the specified log group. Possible values are: 1, 3, 5, 7, 14, 30, 60, 90, 120, 150, 180, 365, 400, 545, 731, 1827, 3653")
 	flag.DurationVar(&interval, "flush-interval", 5*time.Second, "interval to flush the logs")
 	flag.DurationVar(&timeout, "flush-timeout", defaultTimeout, "timeout to flush the logs")
+	flag.StringVar(&logLevel, "log-level", defaultLogLevel, "minimum log level. Possible values are: debug, info, warn, error")
 	flag.BoolVar(&showVersion, "version", false, "show the version")
 	flag.Parse()
+
+	filter := &logutils.LevelFilter{
+		Levels:   []logutils.LogLevel{"DEBUG", "INFO", "WARN", "ERROR"},
+		MinLevel: logutils.LogLevel(strings.ToUpper(logLevel)),
+		Writer:   os.Stderr,
+	}
+	log.SetOutput(filter)
+	log.SetFlags(log.Ldate | log.Ltime | log.Lmicroseconds)
 
 	if showVersion {
 		fmt.Printf("cloudwatch-logs-agent-lite version %s %s/%s (built by %s)\n", getVersion(), runtime.GOOS, runtime.GOARCH, runtime.Version())
 		return
 	}
 	if groupName == "" {
-		log.Fatal("-log-group-name is required.")
+		log.Fatal("[ERROR] -log-group-name is required.")
 	}
 	if !isValidLogRetentionDays(logRetentionDays) {
-		log.Fatalf("invalid log retention days. Possible values are: 1, 3, 5, 7, 14, 30, 60, 90, 120, 150, 180, 365, 400, 545, 731, 1827, 3653: %d", logRetentionDays)
+		log.Fatalf("[ERROR] invalid log retention days. Possible values are: 1, 3, 5, 7, 14, 30, 60, 90, 120, 150, 180, 365, 400, 545, 731, 1827, 3653: %d", logRetentionDays)
 	}
 	if streamName == "" {
 		streamName = generateStreamName(ctx)
@@ -77,7 +96,7 @@ func main() {
 
 	cfg, err := config.LoadDefaultConfig(ctx, opts...)
 	if err != nil {
-		log.Fatal("fail to load aws config: ", err)
+		log.Fatal("[ERROR] fail to load aws config: ", err)
 	}
 
 	a := &agent.Agent{
@@ -92,8 +111,10 @@ func main() {
 		FlushTimout:   timeout,
 	}
 	if err := a.Start(); err != nil {
-		log.Fatal("fail to start: ", err)
+		log.Fatal("[ERROR] fail to start: ", err)
 	}
+	log.Printf("[DEBUG] cloudwatch-logs-agent-lite version %s %s/%s (built by %s) is started",
+		getVersion(), runtime.GOOS, runtime.GOARCH, runtime.Version())
 
 	chwait := make(chan struct{})
 	go func() {
@@ -115,17 +136,18 @@ func main() {
 		select {
 		case s := <-chsig:
 			if chshutdown == nil {
-				log.Printf("received signal %s, shutting down...", s)
+				log.Printf("[INFO] received signal %s, shutting down...", s)
 				chshutdown = make(chan error, 1)
 				go func() {
 					chshutdown <- a.Close()
 				}()
 			} else {
-				log.Fatalf("received signal %s, force to close", s)
+				log.Printf("[WARN] received signal %s, force to close", s)
+				return
 			}
 		case err := <-chshutdown:
 			if err != nil {
-				log.Fatal("fail to close: ", err)
+				log.Print("[ERROR] fail to close: ", err)
 			}
 			return
 		case <-chwait:

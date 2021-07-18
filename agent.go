@@ -127,7 +127,7 @@ func (a *Agent) runTail(t *tail.Tail) {
 			a.errors <- err
 		case <-ticker.C:
 			if dropped != 0 {
-				log.Printf("Warning: %d line(s) are dropped", dropped)
+				log.Printf("[WARN] %d line(s) are dropped", dropped)
 				dropped = 0
 			}
 		}
@@ -150,15 +150,15 @@ LOOP1:
 				err = a.flushWithTimeout()
 			}
 			if err != nil {
-				log.Println("Error: writing the first log failed:", err)
-				log.Println("Your configuration might be wrong. So I can't continue to forward logs.")
-				log.Println("Please check it.")
+				log.Println("[ERROR] writing the first log failed:", err)
+				log.Println("[ERROR] Your configuration might be wrong. So I can't continue to forward logs.")
+				log.Println("[ERROR] Please check it.")
 				a.closeTails()
 			}
 			break LOOP1
 		case err, ok := <-a.errors:
 			if ok {
-				log.Println("Error: reading files failed:", err)
+				log.Println("[ERROR] reading files failed:", err)
 			}
 		}
 	}
@@ -180,22 +180,23 @@ LOOP2:
 			text := strings.TrimSpace(line.Text)
 			err := a.writeEventWithTimeout(line.Time, text)
 			if err != nil {
-				log.Println("Error: writing logs failed:", err)
+				log.Println("[ERROR] writing logs failed:", err)
 				// We guess it is a temporary error, because writing logs have succeeded at least once.
 				// so continue to continue to forward logs.
 			}
 		case err, ok := <-a.errors:
 			if ok {
-				log.Println("Error: reading files failed:", err)
+				log.Println("[ERROR] reading files failed:", err)
 			}
 		case <-flush:
 			// check whether the logs are flushed recently
 			flushed := a.LastFlushedTime()
-			if flushed.IsZero() || time.Since(flushed) < a.FlushInterval {
+			if flushed.IsZero() || time.Since(flushed) >= a.FlushInterval {
 				// the logs aren't flushed recently, we need to flush.
+				log.Println("[DEBUG] periodic flushing")
 				err := a.flushWithTimeout()
 				if err != nil {
-					log.Println("Error: periodic flushing failed:", err)
+					log.Println("[ERROR] periodic flushing failed:", err)
 					// We guess it is a temporary error, because writing logs have succeeded at least once.
 					// so continue to continue to forward logs.
 				}
@@ -203,8 +204,9 @@ LOOP2:
 		}
 	}
 
+	log.Println("[DEBUG] closing the writer")
 	if err := a.closeWithTimeout(); err != nil {
-		log.Println("Error: closing the writer failed:", err)
+		log.Println("[ERROR] closing the writer failed:", err)
 	}
 }
 

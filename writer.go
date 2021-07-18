@@ -177,7 +177,7 @@ func (w *Writer) WriteEventContext(ctx context.Context, now time.Time, message s
 		return 0, nil
 	}
 
-	if w.lastWroteTime.IsZero() || w.lastWroteTime.After(now) {
+	if w.lastWroteTime.IsZero() || now.After(w.lastWroteTime) {
 		w.lastWroteTime = now
 	}
 	l := cloudwatchLen(message)
@@ -215,7 +215,7 @@ func (w *Writer) FlushContext(ctx context.Context) error {
 	if len(events) == 0 {
 		return nil
 	}
-	if w.lastFlushedTime.IsZero() || w.lastFlushedTime.After(w.lastWroteTime) {
+	if w.lastFlushedTime.IsZero() || w.lastWroteTime.After(w.lastFlushedTime) {
 		w.lastFlushedTime = w.lastWroteTime
 	}
 	w.events = events[:0]

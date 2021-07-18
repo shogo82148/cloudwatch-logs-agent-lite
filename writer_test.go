@@ -144,6 +144,58 @@ func TestWriter_WriteEvent(t *testing.T) {
 	}
 }
 
+func TestWriter_LastFlushedTime(t *testing.T) {
+	mockCloudWatch := &cloudwatchlogsiface.Mock{
+		PutLogEventsFunc: func(ctx context.Context, params *cloudwatchlogs.PutLogEventsInput, optFns ...func(*cloudwatchlogs.Options)) (*cloudwatchlogs.PutLogEventsOutput, error) {
+			return &cloudwatchlogs.PutLogEventsOutput{}, nil
+		},
+	}
+	w := &Writer{
+		LogGroupName:  testLogGroup,
+		LogStreamName: testLogStream,
+		logs:          mockCloudWatch,
+	}
+
+	// check initial value of LastFlushedTime()
+	if !w.LastFlushedTime().IsZero() {
+		t.Errorf("initial value of LastFlushedTime() should be zero, but got %s", w.LastFlushedTime())
+	}
+
+	now := time.Unix(1234567890, 0)
+	if _, err := w.WriteEvent(now, "hello"); err != nil {
+		t.Fatal(err)
+	}
+	// LastFlushedTime() isn't updated because "hello" is just buffered.
+	if !w.LastFlushedTime().IsZero() {
+		t.Errorf("unexpected LastFlushedTime(), want zero, got %s", w.LastFlushedTime())
+	}
+
+	if err := w.Flush(); err != nil {
+		t.Fatal(err)
+	}
+	// LastFlushedTime() is updated because "hello" is flushed.
+	if !w.LastFlushedTime().Equal(now) {
+		t.Errorf("unexpected LastFlushedTime(), want %s, got %s", now, w.LastFlushedTime())
+	}
+
+	prev, now := now, now.Add(time.Second)
+	if _, err := w.WriteEvent(now, "world"); err != nil {
+		t.Fatal(err)
+	}
+	// LastFlushedTime() isn't updated because "world" is just buffered.
+	if !w.LastFlushedTime().Equal(prev) {
+		t.Errorf("unexpected LastFlushedTime(), want %s, got %s", prev, w.LastFlushedTime())
+	}
+
+	if err := w.Flush(); err != nil {
+		t.Fatal(err)
+	}
+	// LastFlushedTime() is updated because "world" is flushed.
+	if !w.LastFlushedTime().Equal(now) {
+		t.Errorf("unexpected LastFlushedTime(), want %s, got %s", now, w.LastFlushedTime())
+	}
+}
+
 func TestWriter_createGroup(t *testing.T) {
 	var events []types.InputLogEvent
 	var logGroupName, logStreamName string

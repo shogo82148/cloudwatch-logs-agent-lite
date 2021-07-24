@@ -153,7 +153,7 @@ LOOP1:
 				log.Println("[ERROR] writing the first log failed:", err)
 				log.Println("[ERROR] Your configuration might be wrong. So I can't continue to forward logs.")
 				log.Println("[ERROR] Please check it.")
-				a.closeTails()
+				_ = a.closeTails()
 			}
 			break LOOP1
 		case err, ok := <-a.errors:

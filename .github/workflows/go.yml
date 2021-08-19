@@ -35,6 +35,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-go-
 
+      - run: go mod download
       - name: Test
         run: make test
 

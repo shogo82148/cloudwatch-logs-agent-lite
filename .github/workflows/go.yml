@@ -16,7 +16,7 @@ jobs:
           - ubuntu-latest
           - macOS-latest
         go:
-          - "1.16"
+          - "1.17"
 
     steps:
       - name: Set up Go ${{ matrix.go }}
@@ -35,6 +35,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-go-
 
+      - run: go mod download
       - name: Test
         run: make test
 
@@ -64,7 +65,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v2
         with:
-          go-version: "1.16"
+          go-version: "1.17"
       - name: Check GoReleaser configure
         uses: goreleaser/goreleaser-action@v2
         with:

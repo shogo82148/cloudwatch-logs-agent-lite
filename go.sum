@@ -5,8 +5,9 @@ github.com/aws/aws-sdk-go-v2/config v1.8.3 h1:o5583X4qUfuRrOGOgmOcDgvr5gJVSu57NK
 github.com/aws/aws-sdk-go-v2/config v1.8.3/go.mod h1:4AEiLtAb8kLs7vgw2ZV3p2VZ1+hBavOc84hqxVNpCyw=
 github.com/aws/aws-sdk-go-v2/credentials v1.4.3 h1:LTdD5QhK073MpElh9umLLP97wxphkgVC/OjQaEbBwZA=
 github.com/aws/aws-sdk-go-v2/credentials v1.4.3/go.mod h1:FNNC6nQZQUuyhq5aE5c7ata8o9e4ECGmS4lAXC7o1mQ=
-github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.6.0 h1:9tfxW/icbSu98C2pcNynm5jmDwU3/741F11688B6QnU=
 github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.6.0/go.mod h1:gqlclDEZp4aqJOancXK6TN24aKhT0W0Ae9MHk3wzTMM=
+github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.7.0 h1:FKaqk7geL3oIqSwGJt5SWUKj8uJ+qLZNqlBuqq6sFyA=
+github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.7.0/go.mod h1:KqEkRkxm/+1Pd/rENRNbQpfblDBYeg5HDSqjB6ks8hA=
 github.com/aws/aws-sdk-go-v2/internal/ini v1.2.4 h1:leSJ6vCqtPpTmBIgE7044B1wql1E4n//McF+mEgNrYg=
 github.com/aws/aws-sdk-go-v2/internal/ini v1.2.4/go.mod h1:ZcBrrI3zBKlhGFNYWvju0I3TR93I7YIgAfy82Fh4lcQ=
 github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs v1.8.0 h1:WQY4Qit9/XiIAH4mhbT8qaMFIWl2OExcXrFecz2eGXQ=

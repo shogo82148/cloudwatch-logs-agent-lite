@@ -3,7 +3,7 @@ module github.com/shogo82148/cloudwatch-logs-agent-lite
 go 1.17
 
 require (
-	github.com/aws/aws-sdk-go-v2 v1.11.1
+	github.com/aws/aws-sdk-go-v2 v1.11.2
 	github.com/aws/aws-sdk-go-v2/config v1.10.3
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.8.1
 	github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs v1.10.1

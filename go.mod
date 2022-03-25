@@ -3,9 +3,9 @@ module github.com/shogo82148/cloudwatch-logs-agent-lite
 go 1.17
 
 require (
-	github.com/aws/aws-sdk-go-v2 v1.16.0
+	github.com/aws/aws-sdk-go-v2 v1.16.1
 	github.com/aws/aws-sdk-go-v2/config v1.15.1
-	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.12.1
+	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.12.2
 	github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs v1.15.2
 	github.com/google/go-cmp v0.5.7
 	github.com/hashicorp/logutils v1.0.0
@@ -21,6 +21,6 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.9.1 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sso v1.11.1 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sts v1.16.1 // indirect
-	github.com/aws/smithy-go v1.11.1 // indirect
+	github.com/aws/smithy-go v1.11.2 // indirect
 	github.com/fsnotify/fsnotify v1.5.0 // indirect
 )

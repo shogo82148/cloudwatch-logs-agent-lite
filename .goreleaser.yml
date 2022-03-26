@@ -50,7 +50,7 @@ nfpms:
     builds:
       - cli-amd64
     homepage: https://github.com/shogo82148/cloudwatch-logs-agent-lite/
-    maintainer: Ichinose Shogo <shogo82148@gmail.com>
+    maintainer: ICHINOSE Shogo <shogo82148@gmail.com>
     description: Lightweight log forwarder with CloudWatch
     license: MIT
     formats:
@@ -64,7 +64,7 @@ nfpms:
     builds:
       - cli-arm64
     homepage: https://github.com/shogo82148/cloudwatch-logs-agent-lite/
-    maintainer: Ichinose Shogo <shogo82148@gmail.com>
+    maintainer: ICHINOSE Shogo <shogo82148@gmail.com>
     description: Lightweight log forwarder with CloudWatch
     license: MIT
     formats:

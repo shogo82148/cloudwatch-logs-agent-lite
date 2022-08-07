@@ -167,7 +167,7 @@ func TestAgent_FlushTimeout(t *testing.T) {
 			},
 			Files:         []string{},
 			FlushInterval: time.Second, // periodic flushing is enabled
-			FlushTimout:   time.Second,
+			FlushTimeout:  time.Second,
 		}
 		if err := a.Start(); err != nil {
 			t.Error(err)
@@ -217,7 +217,7 @@ func TestAgent_FlushTimeout(t *testing.T) {
 			},
 			Files:         []string{},
 			FlushInterval: time.Second, // periodic flushing is enabled
-			FlushTimout:   time.Second,
+			FlushTimeout:  time.Second,
 		}
 		if err := a.Start(); err != nil {
 			t.Error(err)

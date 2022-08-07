@@ -27,10 +27,10 @@ type Agent struct {
 	// If zero, no periodic flushing is done.
 	FlushInterval time.Duration
 
-	// FlushInterval specifies the timeout
+	// FlushTimeout specifies the timeout
 	// to flush to the logs.
 	// If zero, flushing is never timeout.
-	FlushTimout time.Duration
+	FlushTimeout time.Duration
 
 	wg     sync.WaitGroup
 	tails  []*tail.Tail
@@ -211,8 +211,8 @@ LOOP2:
 }
 
 func (a *Agent) timeoutContext() (context.Context, context.CancelFunc) {
-	if a.FlushTimout > 0 {
-		return context.WithTimeout(context.Background(), a.FlushTimout)
+	if a.FlushTimeout > 0 {
+		return context.WithTimeout(context.Background(), a.FlushTimeout)
 	}
 	return context.Background(), func() {}
 }

@@ -108,7 +108,7 @@ func main() {
 		},
 		Files:         flag.Args(),
 		FlushInterval: interval,
-		FlushTimout:   timeout,
+		FlushTimeout:  timeout,
 	}
 	if err := a.Start(); err != nil {
 		log.Fatal("[ERROR] fail to start: ", err)

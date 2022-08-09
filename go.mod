@@ -5,7 +5,7 @@ go 1.19
 require (
 	github.com/aws/aws-sdk-go-v2 v1.16.9
 	github.com/aws/aws-sdk-go-v2/config v1.15.15
-	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.12.9
+	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.12.10
 	github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs v1.15.12
 	github.com/google/go-cmp v0.5.8
 	github.com/hashicorp/logutils v1.0.0

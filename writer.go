@@ -212,9 +212,12 @@ func (w *Writer) Flush() error {
 // FlushContext flushes the logs to the AWS CloudWatch Logs.
 func (w *Writer) FlushContext(ctx context.Context) error {
 	events := w.events
+
+	// there is no event; nothing to do
 	if len(events) == 0 {
 		return nil
 	}
+
 	if w.lastFlushedTime.IsZero() || w.lastWroteTime.After(w.lastFlushedTime) {
 		w.lastFlushedTime = w.lastWroteTime
 	}
@@ -223,18 +226,19 @@ func (w *Writer) FlushContext(ctx context.Context) error {
 
 	err := w.putEvents(ctx, events)
 	if err != nil {
-		if awsErr := (*types.ResourceNotFoundException)(nil); errors.As(err, &awsErr) {
+		if _, ok := errorsAs[*types.ResourceNotFoundException](err); ok {
 			// Maybe our log stream doesn't exist yet.
+			// try to create new one.
 			if err := w.createStream(ctx, true); err != nil {
 				return err
 			}
 			return w.putEvents(ctx, events)
 		}
-		if awsErr := (*types.DataAlreadyAcceptedException)(nil); errors.As(err, &awsErr) {
+		if _, ok := errorsAs[*types.DataAlreadyAcceptedException](err); ok {
 			// This batch was already sent
 			return nil
 		}
-		if awsErr := (*types.InvalidSequenceTokenException)(nil); errors.As(err, &awsErr) {
+		if _, ok := errorsAs[*types.InvalidSequenceTokenException](err); ok {
 			if err := w.getNextSequenceToken(ctx); err != nil {
 				return err
 			}
@@ -243,6 +247,11 @@ func (w *Writer) FlushContext(ctx context.Context) error {
 		return err
 	}
 	return nil
+}
+
+func errorsAs[T error](err error) (errT T, ok bool) {
+	ok = errors.As(err, &errT)
+	return
 }
 
 // LastFlushedTime returns the timestamp of the event most recently putted.
@@ -275,11 +284,11 @@ func (w *Writer) createStream(ctx context.Context, tryToCreateGroup bool) error 
 		LogStreamName: &w.LogStreamName,
 	})
 	if err != nil {
-		if awsErr := (*types.ResourceAlreadyExistsException)(nil); errors.As(err, &awsErr) {
+		if _, ok := errorsAs[*types.ResourceAlreadyExistsException](err); ok {
 			// already created, just ignore
 			return nil
 		}
-		if awsErr := (*types.ResourceNotFoundException)(nil); errors.As(err, &awsErr) {
+		if _, ok := errorsAs[*types.ResourceNotFoundException](err); ok {
 			// Maybe our log group doesn't exist yet.
 			if !tryToCreateGroup {
 				return err
@@ -301,7 +310,7 @@ func (w *Writer) createGroup(ctx context.Context) error {
 		LogGroupName: &w.LogGroupName,
 	})
 	if err != nil {
-		if awsErr := (*types.ResourceAlreadyExistsException)(nil); errors.As(err, &awsErr) {
+		if _, ok := errorsAs[*types.ResourceAlreadyExistsException](err); ok {
 			// already created, just ignore
 			log.Printf("[DEBUG] group name %s is already created", w.LogGroupName)
 			return nil
@@ -360,8 +369,8 @@ func (w *Writer) CloseContext(ctx context.Context) error {
 // steal from https://github.com/aws/amazon-cloudwatch-logs-for-fluent-bit/blob/b5dc2e67047da375dd5327e5a2d9cf5a2436219a/cloudwatch/cloudwatch.go#L494-L509
 // effectiveLen counts the effective number of bytes in the string, after
 // UTF-8 normalization.  UTF-8 normalization includes replacing bytes that do
-// not constitute valid UTF-8 encoded Unicode code-points with the Unicode
-// replacement code-point U+FFFD (a 3-byte UTF-8 sequence, represented in Go as
+// not constitute valid UTF-8 encoded Unicode codepoints with the Unicode
+// replacement codepoint U+FFFD (a 3-byte UTF-8 sequence, represented in Go as
 // utf8.RuneError)
 func effectiveLen(line string) int {
 	effectiveBytes := 0

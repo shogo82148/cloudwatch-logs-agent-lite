@@ -22,7 +22,7 @@ const (
 	maximumLogEventsPerPut = 10000
 )
 
-// Writer is a wrapper CloudWatch Logs that provids io.Writer interface.
+// Writer is a wrapper CloudWatch Logs that provides io.Writer interface.
 type Writer struct {
 	Config           aws.Config
 	LogGroupName     string
@@ -360,8 +360,8 @@ func (w *Writer) CloseContext(ctx context.Context) error {
 // steal from https://github.com/aws/amazon-cloudwatch-logs-for-fluent-bit/blob/b5dc2e67047da375dd5327e5a2d9cf5a2436219a/cloudwatch/cloudwatch.go#L494-L509
 // effectiveLen counts the effective number of bytes in the string, after
 // UTF-8 normalization.  UTF-8 normalization includes replacing bytes that do
-// not constitute valid UTF-8 encoded Unicode codepoints with the Unicode
-// replacement codepoint U+FFFD (a 3-byte UTF-8 sequence, represented in Go as
+// not constitute valid UTF-8 encoded Unicode code-points with the Unicode
+// replacement code-point U+FFFD (a 3-byte UTF-8 sequence, represented in Go as
 // utf8.RuneError)
 func effectiveLen(line string) int {
 	effectiveBytes := 0

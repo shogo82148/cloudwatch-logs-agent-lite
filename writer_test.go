@@ -70,6 +70,54 @@ func TestWriter_Write(t *testing.T) {
 	}
 }
 
+func TestWriter_Write_LongLongLine(t *testing.T) {
+	var events []string
+	mockCloudWatch := &cloudwatchlogsiface.Mock{
+		PutLogEventsFunc: func(ctx context.Context, params *cloudwatchlogs.PutLogEventsInput, optFns ...func(*cloudwatchlogs.Options)) (*cloudwatchlogs.PutLogEventsOutput, error) {
+			for _, event := range params.LogEvents {
+				events = append(events, aws.ToString(event.Message))
+			}
+			return &cloudwatchlogs.PutLogEventsOutput{}, nil
+		},
+	}
+	w := &Writer{
+		LogGroupName:  testLogGroup,
+		LogStreamName: testLogStream,
+		logs:          mockCloudWatch,
+	}
+
+	// "あ" has 3 bytes (len("あ") = 3)
+	// and PutLogEvents can put an event up to 1048550 bytes at a time.
+	// (1048550 bytes = maximumBytesPerPut-perEventBytes)
+	//
+	// WriteEvent separates the message that has more than 349516 あ.
+	// len("あ") x 349516 = 1048548 bytes < 1048550 bytes
+	// len("あ") x 349517 = 1048551 bytes > 1048550 bytes
+	for i := 0; i < 349517; i++ {
+		n, err := w.Write([]byte("あ"))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if n != len("あ") {
+			t.Errorf("unexpected wrote bytes: input: %q, want %d, got %d", "あ", len("あ"), n)
+		}
+	}
+	if err := w.Close(); err != nil {
+		t.Fatal(err)
+	}
+	if len(events) != 2 {
+		t.Errorf("unexpected events count: %d", len(events))
+	}
+
+	want := strings.Repeat("あ", 349516)
+	if events[0] != want {
+		t.Errorf("unexpected event: %s", events[0])
+	}
+	if events[1] != "あ" {
+		t.Errorf("unexpected event: %s", events[1])
+	}
+}
+
 func TestWriter_WriteString(t *testing.T) {
 	var events []string
 	mockCloudWatch := &cloudwatchlogsiface.Mock{
@@ -101,6 +149,54 @@ func TestWriter_WriteString(t *testing.T) {
 
 	if diff := cmp.Diff(output, events); diff != "" {
 		t.Errorf("unexpected evenets (-want/+got):\n%s", diff)
+	}
+}
+
+func TestWriter_WriteString_LongLongLine(t *testing.T) {
+	var events []string
+	mockCloudWatch := &cloudwatchlogsiface.Mock{
+		PutLogEventsFunc: func(ctx context.Context, params *cloudwatchlogs.PutLogEventsInput, optFns ...func(*cloudwatchlogs.Options)) (*cloudwatchlogs.PutLogEventsOutput, error) {
+			for _, event := range params.LogEvents {
+				events = append(events, aws.ToString(event.Message))
+			}
+			return &cloudwatchlogs.PutLogEventsOutput{}, nil
+		},
+	}
+	w := &Writer{
+		LogGroupName:  testLogGroup,
+		LogStreamName: testLogStream,
+		logs:          mockCloudWatch,
+	}
+
+	// "あ" has 3 bytes (len("あ") = 3)
+	// and PutLogEvents can put an event up to 1048550 bytes at a time.
+	// (1048550 bytes = maximumBytesPerPut-perEventBytes)
+	//
+	// WriteEvent separates the message that has more than 349516 あ.
+	// len("あ") x 349516 = 1048548 bytes < 1048550 bytes
+	// len("あ") x 349517 = 1048551 bytes > 1048550 bytes
+	for i := 0; i < 349517; i++ {
+		n, err := w.WriteString("あ")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if n != len("あ") {
+			t.Errorf("unexpected wrote bytes: input: %q, want %d, got %d", "あ", len("あ"), n)
+		}
+	}
+	if err := w.Close(); err != nil {
+		t.Fatal(err)
+	}
+	if len(events) != 2 {
+		t.Errorf("unexpected events count: %d", len(events))
+	}
+
+	want := strings.Repeat("あ", 349516)
+	if events[0] != want {
+		t.Errorf("unexpected event: %s", events[0])
+	}
+	if events[1] != "あ" {
+		t.Errorf("unexpected event: %s", events[1])
 	}
 }
 
@@ -377,7 +473,9 @@ func TestWriter_WriteEventContext_LongLongLine(t *testing.T) {
 	if n != len(line) {
 		t.Errorf("unexpected wrote bytes: want %d, got %d", 4, n)
 	}
-	w.Flush()
+	if err := w.Flush(); err != nil {
+		t.Fatal(err)
+	}
 
 	if len(events) != 2 {
 		t.Errorf("unexpected events count: %d", len(events))

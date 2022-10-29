@@ -5,3 +5,6 @@ help: ## Show this text.
 test: ## Run test.
 	go test -v -race  -coverprofile=profile.cov -covermode=atomic ./...
 	go vet ./...
+
+build: ## build binaries.
+	goreleaser build --rm-dist --snapshot

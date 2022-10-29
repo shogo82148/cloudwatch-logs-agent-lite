@@ -393,5 +393,11 @@ func (w *Writer) Close() error {
 
 // CloseContexts closes the Writer.
 func (w *Writer) CloseContext(ctx context.Context) error {
+	if w.remain.Len() > 0 {
+		_, err := w.WriteEventContext(ctx, time.Now(), w.remain.String())
+		if err != nil {
+			return err
+		}
+	}
 	return w.FlushContext(ctx)
 }

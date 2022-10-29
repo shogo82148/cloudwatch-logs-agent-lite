@@ -70,36 +70,36 @@ func (w *Writer) WriteWithTime(now time.Time, p []byte) (int, error) {
 
 // WriteWithTimeContext writes data with timestamp.
 func (w *Writer) WriteWithTimeContext(ctx context.Context, now time.Time, p []byte) (int, error) {
-	// concat the remain and the first line
-	// if w.remain.Len() != 0 {
-	// 	idx := bytes.IndexByte(p, '\n')
-	// 	if idx < 0 {
-	// 		return w.remain.Write(p)
-	// 	}
+	currentByteLength := w.currentByteLength
+	n := 0
+	for n < len(p) {
+		r, m := utf8.DecodeRune(p[n:])
+		n += m
+		if r == '\n' {
+			// go to next line
+			if _, err := w.writeEventContext(ctx, now, w.remain.String()); err != nil {
+				return 0, err
+			}
+			currentByteLength = w.currentByteLength
+			w.remain.Reset()
+			continue
+		}
 
-	// 	// bytes.Buffer never return any error.
-	// 	// so we don't need to check it.
-	// 	n, _ := w.remain.Write(p[:idx])
-	// 	m += n
-	// 	m++ // for '\n'
+		l := utf8.RuneLen(r)
+		if w.remain.Len()+l > maximumBytesPerEvent ||
+			currentByteLength+l > maximumBytesPerPut {
 
-	// 	line := w.remain.String()
-	// 	p = p[idx+1:]
-	// 	w.remain.Reset()
-	// 	_, err := w.WriteEventContext(ctx, now, line)
-	// 	if err != nil {
-	// 		return m, err
-	// 	}
-	// }
-
-	var m int
-	for m < len(p) {
-		r, n := utf8.DecodeLastRune(p[m:])
-		m += n
-		utf8.RuneLen(r)
+			// message is too long; we need to split it.
+			if _, err := w.writeEventContext(ctx, now, w.remain.String()); err != nil {
+				return 0, err
+			}
+			currentByteLength = w.currentByteLength
+			w.remain.Reset()
+		}
 		w.remain.WriteRune(r)
+		currentByteLength += l
 	}
-	return m, nil
+	return n, nil
 }
 
 // WriteString writes a string.
@@ -119,47 +119,36 @@ func (w *Writer) WriteStringWithTime(now time.Time, s string) (int, error) {
 
 // WriteStringWithTimeContext writes data with timestamp.
 func (w *Writer) WriteStringWithTimeContext(ctx context.Context, now time.Time, s string) (int, error) {
-	var m int
-
-	// concat the remain and the first line
-	if w.remain.Len() != 0 {
-		idx := strings.IndexByte(s, '\n')
-		if idx < 0 {
-			return w.remain.WriteString(s)
+	currentByteLength := w.currentByteLength
+	n := 0
+	for n < len(s) {
+		r, m := utf8.DecodeRuneInString(s[n:])
+		n += m
+		if r == '\n' {
+			// go to next line
+			if _, err := w.writeEventContext(ctx, now, w.remain.String()); err != nil {
+				return 0, err
+			}
+			currentByteLength = w.currentByteLength
+			w.remain.Reset()
+			continue
 		}
 
-		// bytes.Buffer never return any error.
-		// so we don't need to check it.
-		n, _ := w.remain.WriteString(s[:idx])
-		m += n
-		m++ // for '\n'
+		l := utf8.RuneLen(r)
+		if w.remain.Len()+l > maximumBytesPerEvent ||
+			currentByteLength+l > maximumBytesPerPut {
 
-		line := w.remain.String()
-		s = s[idx+1:]
-		w.remain.Reset()
-		_, err := w.WriteEventContext(ctx, now, line)
-		if err != nil {
-			return m, err
+			// message is too long; we need to split it.
+			if _, err := w.writeEventContext(ctx, now, w.remain.String()); err != nil {
+				return 0, err
+			}
+			currentByteLength = w.currentByteLength
+			w.remain.Reset()
 		}
+		w.remain.WriteRune(r)
+		currentByteLength += l
 	}
-
-	for len(s) > 0 {
-		idx := strings.IndexByte(s, '\n')
-		if idx < 0 {
-			w.remain.WriteString(s)
-			m += len(s)
-			break
-		}
-		line := s[:idx]
-		s = s[idx+1:]
-		n, err := w.WriteEventContext(ctx, now, line)
-		if err != nil {
-			return m, err
-		}
-		m += n
-		m++ // for '\n'
-	}
-	return m, nil
+	return n, nil
 }
 
 // WriteEvent writes an log event.
@@ -180,7 +169,7 @@ func (w *Writer) WriteEventContext(ctx context.Context, now time.Time, message s
 
 	n := 0
 	for n < len(message) {
-		r, m := utf8.DecodeLastRuneInString(message[n:])
+		r, m := utf8.DecodeRuneInString(message[n:])
 		n += m
 
 		l := utf8.RuneLen(r)
@@ -405,22 +394,4 @@ func (w *Writer) Close() error {
 // CloseContexts closes the Writer.
 func (w *Writer) CloseContext(ctx context.Context) error {
 	return w.FlushContext(ctx)
-}
-
-// steal from https://github.com/aws/amazon-cloudwatch-logs-for-fluent-bit/blob/b5dc2e67047da375dd5327e5a2d9cf5a2436219a/cloudwatch/cloudwatch.go#L494-L509
-// effectiveLen counts the effective number of bytes in the string, after
-// UTF-8 normalization.  UTF-8 normalization includes replacing bytes that do
-// not constitute valid UTF-8 encoded Unicode codepoints with the Unicode
-// replacement codepoint U+FFFD (a 3-byte UTF-8 sequence, represented in Go as
-// utf8.RuneError)
-func effectiveLen(line string) int {
-	effectiveBytes := 0
-	for _, rune := range line {
-		effectiveBytes += utf8.RuneLen(rune)
-	}
-	return effectiveBytes
-}
-
-func cloudwatchLen(event string) int {
-	return effectiveLen(event) + perEventBytes
 }

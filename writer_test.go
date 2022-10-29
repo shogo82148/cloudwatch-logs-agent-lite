@@ -1,7 +1,6 @@
 package agent
 
 import (
-	"bytes"
 	"context"
 	"io"
 	"strings"
@@ -437,39 +436,5 @@ func TestWriter_WriteEventContext_ReplacementChar(t *testing.T) {
 	}
 	if events[1] != "\uFFFD" {
 		t.Errorf("unexpected event: %s", events[1])
-	}
-}
-
-func TestWriter_Write_LongLongLine(t *testing.T) {
-	var events []string
-	mockCloudWatch := &cloudwatchlogsiface.Mock{
-		PutLogEventsFunc: func(ctx context.Context, params *cloudwatchlogs.PutLogEventsInput, optFns ...func(*cloudwatchlogs.Options)) (*cloudwatchlogs.PutLogEventsOutput, error) {
-			for _, event := range params.LogEvents {
-				events = append(events, aws.ToString(event.Message))
-			}
-			return &cloudwatchlogs.PutLogEventsOutput{}, nil
-		},
-	}
-	w := &Writer{
-		LogGroupName:  testLogGroup,
-		LogStreamName: testLogStream,
-		logs:          mockCloudWatch,
-	}
-
-	input := bytes.Repeat([]byte("😀"), 1<<20)
-	input = append(input, '\n')
-	n, err := w.Write(input)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if n != len(input) {
-		t.Errorf("unexpected wrote bytes: input: %q, want %d, got %d", input, len(input), n)
-	}
-	if err := w.Flush(); err != nil {
-		t.Fatal(err)
-	}
-
-	if diff := cmp.Diff(output, events); diff != "" {
-		t.Errorf("unexpected events (-want/+got):\n%s", diff)
 	}
 }

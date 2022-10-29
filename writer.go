@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"fmt"
 	"log"
 	"strings"
 	"time"
@@ -20,6 +21,7 @@ const (
 	perEventBytes          = 26
 	maximumBytesPerPut     = 1048576
 	maximumLogEventsPerPut = 10000
+	maximumBytesPerEvent   = maximumBytesPerPut - perEventBytes
 )
 
 // Writer is a wrapper CloudWatch Logs that provides io.Writer interface.
@@ -31,11 +33,17 @@ type Writer struct {
 
 	logs              cloudwatchlogsiface.Interface
 	nextSequenceToken *string
-	remain            bytes.Buffer
-	events            []types.InputLogEvent
+
+	remain bytes.Buffer
+
+	// events buffered
+	events []types.InputLogEvent
+
+	// current byte length in events
 	currentByteLength int
-	lastWroteTime     time.Time
-	lastFlushedTime   time.Time
+
+	lastWroteTime   time.Time
+	lastFlushedTime time.Time
 }
 
 func (w *Writer) logsClient() cloudwatchlogsiface.Interface {
@@ -62,48 +70,36 @@ func (w *Writer) WriteWithTime(now time.Time, p []byte) (int, error) {
 
 // WriteWithTimeContext writes data with timestamp.
 func (w *Writer) WriteWithTimeContext(ctx context.Context, now time.Time, p []byte) (int, error) {
-	var m int
-
-	// concat the remain and the first line
-	if w.remain.Len() != 0 {
-		idx := bytes.IndexByte(p, '\n')
-		if idx < 0 {
-			return w.remain.Write(p)
+	currentByteLength := w.currentByteLength
+	n := 0
+	for n < len(p) {
+		r, m := utf8.DecodeRune(p[n:])
+		n += m
+		if r == '\n' {
+			// go to next line
+			if _, err := w.writeEventContext(ctx, now, w.remain.String()); err != nil {
+				return 0, err
+			}
+			currentByteLength = w.currentByteLength
+			w.remain.Reset()
+			continue
 		}
 
-		// bytes.Buffer never return any error.
-		// so we don't need to check it.
-		n, _ := w.remain.Write(p[:idx])
-		m += n
-		m++ // for '\n'
+		l := utf8.RuneLen(r)
+		if w.remain.Len()+l > maximumBytesPerEvent ||
+			currentByteLength+l > maximumBytesPerPut {
 
-		line := w.remain.String()
-		p = p[idx+1:]
-		w.remain.Reset()
-		_, err := w.WriteEventContext(ctx, now, line)
-		if err != nil {
-			return m, err
+			// message is too long; we need to split it.
+			if _, err := w.writeEventContext(ctx, now, w.remain.String()); err != nil {
+				return 0, err
+			}
+			currentByteLength = w.currentByteLength
+			w.remain.Reset()
 		}
+		w.remain.WriteRune(r)
+		currentByteLength += l
 	}
-
-	for len(p) > 0 {
-		idx := bytes.IndexByte(p, '\n')
-		if idx < 0 {
-			w.remain.Write(p)
-			m += len(p)
-			break
-		}
-		line := string(p[:idx])
-		p = p[idx+1:]
-		n, err := w.WriteEventContext(ctx, now, line)
-		if err != nil {
-			return m, err
-		}
-		m += n
-		m++ // for '\n'
-	}
-
-	return m, nil
+	return n, nil
 }
 
 // WriteString writes a string.
@@ -123,47 +119,36 @@ func (w *Writer) WriteStringWithTime(now time.Time, s string) (int, error) {
 
 // WriteStringWithTimeContext writes data with timestamp.
 func (w *Writer) WriteStringWithTimeContext(ctx context.Context, now time.Time, s string) (int, error) {
-	var m int
-
-	// concat the remain and the first line
-	if w.remain.Len() != 0 {
-		idx := strings.IndexByte(s, '\n')
-		if idx < 0 {
-			return w.remain.WriteString(s)
+	currentByteLength := w.currentByteLength
+	n := 0
+	for n < len(s) {
+		r, m := utf8.DecodeRuneInString(s[n:])
+		n += m
+		if r == '\n' {
+			// go to next line
+			if _, err := w.writeEventContext(ctx, now, w.remain.String()); err != nil {
+				return 0, err
+			}
+			currentByteLength = w.currentByteLength
+			w.remain.Reset()
+			continue
 		}
 
-		// bytes.Buffer never return any error.
-		// so we don't need to check it.
-		n, _ := w.remain.WriteString(s[:idx])
-		m += n
-		m++ // for '\n'
+		l := utf8.RuneLen(r)
+		if w.remain.Len()+l > maximumBytesPerEvent ||
+			currentByteLength+l > maximumBytesPerPut {
 
-		line := w.remain.String()
-		s = s[idx+1:]
-		w.remain.Reset()
-		_, err := w.WriteEventContext(ctx, now, line)
-		if err != nil {
-			return m, err
+			// message is too long; we need to split it.
+			if _, err := w.writeEventContext(ctx, now, w.remain.String()); err != nil {
+				return 0, err
+			}
+			currentByteLength = w.currentByteLength
+			w.remain.Reset()
 		}
+		w.remain.WriteRune(r)
+		currentByteLength += l
 	}
-
-	for len(s) > 0 {
-		idx := strings.IndexByte(s, '\n')
-		if idx < 0 {
-			w.remain.WriteString(s)
-			m += len(s)
-			break
-		}
-		line := s[:idx]
-		s = s[idx+1:]
-		n, err := w.WriteEventContext(ctx, now, line)
-		if err != nil {
-			return m, err
-		}
-		m += n
-		m++ // for '\n'
-	}
-	return m, nil
+	return n, nil
 }
 
 // WriteEvent writes an log event.
@@ -171,8 +156,48 @@ func (w *Writer) WriteEvent(now time.Time, message string) (int, error) {
 	return w.WriteEventContext(context.Background(), now, message)
 }
 
-// WriteEventContext writes an log event.
+// WriteEventContext writes log events.
+// Long message might be separated into multiple events.
 func (w *Writer) WriteEventContext(ctx context.Context, now time.Time, message string) (int, error) {
+	// pre-allocate buffer
+	var buf strings.Builder
+	grow := len(message)
+	if grow > maximumBytesPerEvent {
+		grow = maximumBytesPerEvent
+	}
+	buf.Grow(grow)
+
+	n := 0
+	for n < len(message) {
+		r, m := utf8.DecodeRuneInString(message[n:])
+		n += m
+
+		l := utf8.RuneLen(r)
+		if buf.Len()+l > maximumBytesPerEvent {
+			// message is too long; we need to split it.
+			if _, err := w.writeEventContext(ctx, now, buf.String()); err != nil {
+				return 0, err
+			}
+
+			// reset and pre-allocate buffer
+			buf.Reset()
+			grow := len(message) - n
+			if grow > maximumBytesPerEvent {
+				grow = maximumBytesPerEvent
+			}
+			buf.Grow(grow)
+		}
+		buf.WriteRune(r)
+	}
+	if _, err := w.writeEventContext(ctx, now, buf.String()); err != nil {
+		return 0, err
+	}
+	return n, nil
+}
+
+// writeEventContext writes an log event.
+// message must valid utf8 string and len(message) <= maximumBytesPerEvent.
+func (w *Writer) writeEventContext(ctx context.Context, now time.Time, message string) (int, error) {
 	if message == "" {
 		return 0, nil
 	}
@@ -180,9 +205,12 @@ func (w *Writer) WriteEventContext(ctx context.Context, now time.Time, message s
 	if w.lastWroteTime.IsZero() || now.After(w.lastWroteTime) {
 		w.lastWroteTime = now
 	}
-	l := cloudwatchLen(message)
 
-	if w.currentByteLength+l >= maximumBytesPerPut {
+	l := len(message) + perEventBytes
+	if l > maximumBytesPerPut {
+		return 0, fmt.Errorf("agent: internal error: too long event message: %d", l)
+	}
+	if w.currentByteLength+l > maximumBytesPerPut {
 		// the byte length will be over the limit
 		// need flush before adding the new event.
 		if err := w.FlushContext(ctx); err != nil {
@@ -195,8 +223,10 @@ func (w *Writer) WriteEventContext(ctx context.Context, now time.Time, message s
 		Timestamp: aws.Int64(now.Unix()*1000 + int64(now.Nanosecond()/1000000)),
 	})
 	w.currentByteLength += l
-	if len(w.events) == maximumLogEventsPerPut {
-		// the count of events reaches the limit, need flush.
+	if len(w.events) == maximumLogEventsPerPut || // the count of events reaches the limit
+		w.currentByteLength >= maximumBytesPerEvent { // byte length reaches the limit
+
+		// we need to flush
 		if err := w.FlushContext(ctx); err != nil {
 			return 0, err
 		}
@@ -212,9 +242,12 @@ func (w *Writer) Flush() error {
 // FlushContext flushes the logs to the AWS CloudWatch Logs.
 func (w *Writer) FlushContext(ctx context.Context) error {
 	events := w.events
+
+	// there is no event; nothing to do
 	if len(events) == 0 {
 		return nil
 	}
+
 	if w.lastFlushedTime.IsZero() || w.lastWroteTime.After(w.lastFlushedTime) {
 		w.lastFlushedTime = w.lastWroteTime
 	}
@@ -223,18 +256,19 @@ func (w *Writer) FlushContext(ctx context.Context) error {
 
 	err := w.putEvents(ctx, events)
 	if err != nil {
-		if awsErr := (*types.ResourceNotFoundException)(nil); errors.As(err, &awsErr) {
+		if _, ok := errorsAs[*types.ResourceNotFoundException](err); ok {
 			// Maybe our log stream doesn't exist yet.
+			// try to create new one.
 			if err := w.createStream(ctx, true); err != nil {
 				return err
 			}
 			return w.putEvents(ctx, events)
 		}
-		if awsErr := (*types.DataAlreadyAcceptedException)(nil); errors.As(err, &awsErr) {
+		if _, ok := errorsAs[*types.DataAlreadyAcceptedException](err); ok {
 			// This batch was already sent
 			return nil
 		}
-		if awsErr := (*types.InvalidSequenceTokenException)(nil); errors.As(err, &awsErr) {
+		if _, ok := errorsAs[*types.InvalidSequenceTokenException](err); ok {
 			if err := w.getNextSequenceToken(ctx); err != nil {
 				return err
 			}
@@ -243,6 +277,11 @@ func (w *Writer) FlushContext(ctx context.Context) error {
 		return err
 	}
 	return nil
+}
+
+func errorsAs[T error](err error) (errT T, ok bool) {
+	ok = errors.As(err, &errT)
+	return
 }
 
 // LastFlushedTime returns the timestamp of the event most recently putted.
@@ -275,11 +314,11 @@ func (w *Writer) createStream(ctx context.Context, tryToCreateGroup bool) error 
 		LogStreamName: &w.LogStreamName,
 	})
 	if err != nil {
-		if awsErr := (*types.ResourceAlreadyExistsException)(nil); errors.As(err, &awsErr) {
+		if _, ok := errorsAs[*types.ResourceAlreadyExistsException](err); ok {
 			// already created, just ignore
 			return nil
 		}
-		if awsErr := (*types.ResourceNotFoundException)(nil); errors.As(err, &awsErr) {
+		if _, ok := errorsAs[*types.ResourceNotFoundException](err); ok {
 			// Maybe our log group doesn't exist yet.
 			if !tryToCreateGroup {
 				return err
@@ -301,7 +340,7 @@ func (w *Writer) createGroup(ctx context.Context) error {
 		LogGroupName: &w.LogGroupName,
 	})
 	if err != nil {
-		if awsErr := (*types.ResourceAlreadyExistsException)(nil); errors.As(err, &awsErr) {
+		if _, ok := errorsAs[*types.ResourceAlreadyExistsException](err); ok {
 			// already created, just ignore
 			log.Printf("[DEBUG] group name %s is already created", w.LogGroupName)
 			return nil
@@ -355,22 +394,4 @@ func (w *Writer) Close() error {
 // CloseContexts closes the Writer.
 func (w *Writer) CloseContext(ctx context.Context) error {
 	return w.FlushContext(ctx)
-}
-
-// steal from https://github.com/aws/amazon-cloudwatch-logs-for-fluent-bit/blob/b5dc2e67047da375dd5327e5a2d9cf5a2436219a/cloudwatch/cloudwatch.go#L494-L509
-// effectiveLen counts the effective number of bytes in the string, after
-// UTF-8 normalization.  UTF-8 normalization includes replacing bytes that do
-// not constitute valid UTF-8 encoded Unicode code-points with the Unicode
-// replacement code-point U+FFFD (a 3-byte UTF-8 sequence, represented in Go as
-// utf8.RuneError)
-func effectiveLen(line string) int {
-	effectiveBytes := 0
-	for _, rune := range line {
-		effectiveBytes += utf8.RuneLen(rune)
-	}
-	return effectiveBytes
-}
-
-func cloudwatchLen(event string) int {
-	return effectiveLen(event) + perEventBytes
 }

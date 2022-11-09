@@ -224,7 +224,7 @@ func (w *Writer) writeEventContext(ctx context.Context, now time.Time, message s
 	})
 	w.currentByteLength += l
 	if len(w.events) == maximumLogEventsPerPut || // the count of events reaches the limit
-		w.currentByteLength >= maximumBytesPerEvent { // byte length reaches the limit
+		w.currentByteLength >= maximumBytesPerPut { // byte length reaches the limit
 
 		// we need to flush
 		if err := w.FlushContext(ctx); err != nil {

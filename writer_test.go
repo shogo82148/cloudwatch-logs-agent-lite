@@ -87,13 +87,13 @@ func TestWriter_Write_LongLongLine(t *testing.T) {
 	}
 
 	// "あ" has 3 bytes (len("あ") = 3)
-	// and PutLogEvents can put an event up to 1048550 bytes at a time.
-	// (1048550 bytes = maximumBytesPerPut-perEventBytes)
+	// and PutLogEvents can put an event up to 262118 bytes at a time.
+	// (262118 bytes = maximumBytesPerEvent)
 	//
-	// WriteEvent separates the message that has more than 349516 あ.
-	// len("あ") x 349516 = 1048548 bytes < 1048550 bytes
-	// len("あ") x 349517 = 1048551 bytes > 1048550 bytes
-	for i := 0; i < 349517; i++ {
+	// WriteEvent separates the message that has more than 87372 あ.
+	// len("あ") x 87372 = 262116 bytes < 262118 bytes
+	// len("あ") x 87373 = 262119 bytes > 262118 bytes
+	for i := 0; i < 87373; i++ {
 		n, err := w.Write([]byte("あ"))
 		if err != nil {
 			t.Fatal(err)
@@ -109,7 +109,7 @@ func TestWriter_Write_LongLongLine(t *testing.T) {
 		t.Errorf("unexpected events count: %d", len(events))
 	}
 
-	want := strings.Repeat("あ", 349516)
+	want := strings.Repeat("あ", 87372)
 	if events[0] != want {
 		t.Errorf("unexpected event: %s", events[0])
 	}
@@ -148,7 +148,7 @@ func TestWriter_WriteString(t *testing.T) {
 	}
 
 	if diff := cmp.Diff(output, events); diff != "" {
-		t.Errorf("unexpected evenets (-want/+got):\n%s", diff)
+		t.Errorf("unexpected events (-want/+got):\n%s", diff)
 	}
 }
 
@@ -169,13 +169,13 @@ func TestWriter_WriteString_LongLongLine(t *testing.T) {
 	}
 
 	// "あ" has 3 bytes (len("あ") = 3)
-	// and PutLogEvents can put an event up to 1048550 bytes at a time.
-	// (1048550 bytes = maximumBytesPerPut-perEventBytes)
+	// and PutLogEvents can put an event up to 262118 bytes at a time.
+	// (262118 bytes = maximumBytesPerEvent)
 	//
-	// WriteEvent separates the message that has more than 349516 あ.
-	// len("あ") x 349516 = 1048548 bytes < 1048550 bytes
-	// len("あ") x 349517 = 1048551 bytes > 1048550 bytes
-	for i := 0; i < 349517; i++ {
+	// WriteEvent separates the message that has more than 87372 あ.
+	// len("あ") x 87372 = 262116 bytes < 262118 bytes
+	// len("あ") x 87373 = 262119 bytes > 262118 bytes
+	for i := 0; i < 87373; i++ {
 		n, err := w.WriteString("あ")
 		if err != nil {
 			t.Fatal(err)
@@ -191,7 +191,7 @@ func TestWriter_WriteString_LongLongLine(t *testing.T) {
 		t.Errorf("unexpected events count: %d", len(events))
 	}
 
-	want := strings.Repeat("あ", 349516)
+	want := strings.Repeat("あ", 87372)
 	if events[0] != want {
 		t.Errorf("unexpected event: %s", events[0])
 	}

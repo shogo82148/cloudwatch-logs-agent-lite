@@ -9,8 +9,8 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs v1.16.1
 	github.com/google/go-cmp v0.5.9
 	github.com/hashicorp/logutils v1.0.0
-	github.com/shogo82148/go-tail v0.0.6
-	golang.org/x/sys v0.0.0-20210818153620-00dd8d7831e7 // indirect
+	github.com/shogo82148/go-tail v1.0.0
+	golang.org/x/sys v0.2.0 // indirect
 )
 
 require (
@@ -23,5 +23,5 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.13.8 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sts v1.17.1 // indirect
 	github.com/aws/smithy-go v1.13.4 // indirect
-	github.com/fsnotify/fsnotify v1.5.0 // indirect
+	github.com/fsnotify/fsnotify v1.6.0 // indirect
 )

@@ -21,7 +21,7 @@ const (
 	perEventBytes          = 26
 	maximumBytesPerPut     = 1048576
 	maximumLogEventsPerPut = 10000
-	maximumBytesPerEvent   = maximumBytesPerPut - perEventBytes
+	maximumBytesPerEvent   = 262144 - perEventBytes
 )
 
 // Writer is a wrapper CloudWatch Logs that provides io.Writer interface.
@@ -224,7 +224,7 @@ func (w *Writer) writeEventContext(ctx context.Context, now time.Time, message s
 	})
 	w.currentByteLength += l
 	if len(w.events) == maximumLogEventsPerPut || // the count of events reaches the limit
-		w.currentByteLength >= maximumBytesPerEvent { // byte length reaches the limit
+		w.currentByteLength >= maximumBytesPerPut { // byte length reaches the limit
 
 		// we need to flush
 		if err := w.FlushContext(ctx); err != nil {

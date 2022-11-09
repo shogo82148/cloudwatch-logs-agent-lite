@@ -9,7 +9,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs v1.16.1
 	github.com/google/go-cmp v0.5.9
 	github.com/hashicorp/logutils v1.0.0
-	github.com/shogo82148/go-tail v1.0.0
+	github.com/shogo82148/go-tail v1.0.2
 	golang.org/x/sys v0.2.0 // indirect
 )
 

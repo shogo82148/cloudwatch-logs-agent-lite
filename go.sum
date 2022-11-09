@@ -35,8 +35,8 @@ github.com/hashicorp/logutils v1.0.0/go.mod h1:QIAnNjmIWmVIIkWDTG1z5v++HQmx9WQRO
 github.com/jmespath/go-jmespath v0.4.0/go.mod h1:T8mJZnbsbmF+m6zOOFylbeCJqk5+pHWvzYPziyZiYoo=
 github.com/jmespath/go-jmespath/internal/testify v1.5.1/go.mod h1:L3OGu8Wl2/fWfCI6z80xFu9LTZmf1ZRjMHUOPmWr69U=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
-github.com/shogo82148/go-tail v1.0.0 h1:nQfsGLQZ9labQNeLypP14edJO9nNFb2U3td94SLQaqE=
-github.com/shogo82148/go-tail v1.0.0/go.mod h1:RPtAdpuaHFTVKwCd6VEFA70InxXjiq8N5P+LVW1Jua0=
+github.com/shogo82148/go-tail v1.0.2 h1:ungi5Y7dLClTCuVUvoaY17wTmZ15LIZAA2ZFzSTjdYw=
+github.com/shogo82148/go-tail v1.0.2/go.mod h1:RPtAdpuaHFTVKwCd6VEFA70InxXjiq8N5P+LVW1Jua0=
 github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
 golang.org/x/sys v0.0.0-20220908164124-27713097b956/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
 golang.org/x/sys v0.2.0 h1:ljd4t30dBnAvMZaQCevtY0xLLD0A+bRZXbgLMLU1F/A=

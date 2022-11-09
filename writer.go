@@ -21,7 +21,7 @@ const (
 	perEventBytes          = 26
 	maximumBytesPerPut     = 1048576
 	maximumLogEventsPerPut = 10000
-	maximumBytesPerEvent   = maximumBytesPerPut - perEventBytes
+	maximumBytesPerEvent   = 262144 - perEventBytes
 )
 
 // Writer is a wrapper CloudWatch Logs that provides io.Writer interface.

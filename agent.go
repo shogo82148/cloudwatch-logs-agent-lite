@@ -52,10 +52,13 @@ func (a *Agent) Start() error {
 	for _, f := range files {
 		var t *tail.Tail
 		var err error
+		opts := tail.Options{
+			MaxBytesLine: maximumBytesPerPut,
+		}
 		if f == "-" {
-			t, err = tail.NewTailReader(stdin)
+			t, err = tail.NewTailReaderWithOptions(stdin, opts)
 		} else {
-			t, err = tail.NewTailFile(f)
+			t, err = tail.NewTailFileWithOptions(f, opts)
 		}
 		if err != nil {
 			for _, t := range a.tails {

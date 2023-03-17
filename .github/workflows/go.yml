@@ -15,8 +15,6 @@ jobs:
         os:
           - ubuntu-latest
           - macOS-latest
-        go:
-          - "1.19"
 
     steps:
       - name: Check out code into the Go module directory
@@ -25,8 +23,7 @@ jobs:
       - name: Set up Go ${{ matrix.go }}
         uses: actions/setup-go@v4
         with:
-          go-version: ${{ matrix.go }}
-          cache: true
+          go-version-file: go.mod
 
       - run: go mod download
       - name: Test
@@ -59,7 +56,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v4
         with:
-          go-version: "1.19"
+          go-version-file: go.mod
       - name: Check GoReleaser configure
         uses: goreleaser/goreleaser-action@v4
         with:

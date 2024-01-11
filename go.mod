@@ -6,7 +6,7 @@ require (
 	github.com/aws/aws-sdk-go-v2 v1.24.1
 	github.com/aws/aws-sdk-go-v2/config v1.26.3
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.14.11
-	github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs v1.30.2
+	github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs v1.31.0
 	github.com/google/go-cmp v0.6.0
 	github.com/hashicorp/logutils v1.0.0
 	github.com/shogo82148/go-tail v1.0.2

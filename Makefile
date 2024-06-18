@@ -7,4 +7,4 @@ test: ## Run test.
 	go vet ./...
 
 build: ## build binaries.
-	goreleaser build --rm-dist --snapshot
+	goreleaser build --clean --snapshot

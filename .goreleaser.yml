@@ -32,7 +32,7 @@ builds:
       - -s -w
       - -X main.version={{.Version}}
 archives:
-  - builds:
+  - ids:
       - cli-amd64
       - cli-arm64
 checksum:

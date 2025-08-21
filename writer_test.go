@@ -87,19 +87,15 @@ func TestWriter_Write_LongLongLine(t *testing.T) {
 	}
 
 	// "あ" has 3 bytes (len("あ") = 3)
-	// and PutLogEvents can put an event up to 262118 bytes at a time.
-	// (262118 bytes = maximumBytesPerEvent)
-	//
-	// WriteEvent separates the message that has more than 87372 あ.
-	// len("あ") x 87372 = 262116 bytes < 262118 bytes
-	// len("あ") x 87373 = 262119 bytes > 262118 bytes
-	for i := 0; i < 87373; i++ {
-		n, err := w.Write([]byte("あ"))
+	// and PutLogEvents can put an event up to maximumBytesPerEvent bytes at a time.
+	data := []byte("あ")
+	for range maximumBytesPerEvent/3 + 1 {
+		n, err := w.Write(data)
 		if err != nil {
 			t.Fatal(err)
 		}
-		if n != len("あ") {
-			t.Errorf("unexpected wrote bytes: input: %q, want %d, got %d", "あ", len("あ"), n)
+		if n != len(data) {
+			t.Errorf("unexpected wrote bytes: input: %q, want %d, got %d", data, len(data), n)
 		}
 	}
 	if err := w.Close(); err != nil {
@@ -109,7 +105,7 @@ func TestWriter_Write_LongLongLine(t *testing.T) {
 		t.Errorf("unexpected events count: %d", len(events))
 	}
 
-	want := strings.Repeat("あ", 87372)
+	want := strings.Repeat("あ", maximumBytesPerEvent/3)
 	if events[0] != want {
 		t.Errorf("unexpected event: %s", events[0])
 	}
@@ -169,13 +165,8 @@ func TestWriter_WriteString_LongLongLine(t *testing.T) {
 	}
 
 	// "あ" has 3 bytes (len("あ") = 3)
-	// and PutLogEvents can put an event up to 262118 bytes at a time.
-	// (262118 bytes = maximumBytesPerEvent)
-	//
-	// WriteEvent separates the message that has more than 87372 あ.
-	// len("あ") x 87372 = 262116 bytes < 262118 bytes
-	// len("あ") x 87373 = 262119 bytes > 262118 bytes
-	for i := 0; i < 87373; i++ {
+	// and PutLogEvents can put an event up to maximumBytesPerEvent bytes at a time.
+	for range maximumBytesPerEvent/3 + 1 {
 		n, err := w.WriteString("あ")
 		if err != nil {
 			t.Fatal(err)
@@ -191,7 +182,7 @@ func TestWriter_WriteString_LongLongLine(t *testing.T) {
 		t.Errorf("unexpected events count: %d", len(events))
 	}
 
-	want := strings.Repeat("あ", 87372)
+	want := strings.Repeat("あ", maximumBytesPerEvent/3)
 	if events[0] != want {
 		t.Errorf("unexpected event: %s", events[0])
 	}
@@ -458,13 +449,8 @@ func TestWriter_WriteEventContext_LongLongLine(t *testing.T) {
 	}
 
 	// "あ" has 3 bytes (len("あ") = 3)
-	// and PutLogEvents can put an event up to 262118 bytes at a time.
-	// (262118 bytes = maximumBytesPerEvent)
-	//
-	// WriteEvent separates the message that has more than 87372 あ.
-	// len("あ") x 87372 = 262116 bytes < 262118 bytes
-	// len("あ") x 87373 = 262119 bytes > 262118 bytes
-	line := strings.Repeat("あ", 87373)
+	// and PutLogEvents can put an event up to maximumBytesPerEvent bytes at a time.
+	line := strings.Repeat("あ", maximumBytesPerEvent/3+1)
 
 	n, err := w.WriteEvent(time.Now(), line)
 	if err != nil {
@@ -480,7 +466,7 @@ func TestWriter_WriteEventContext_LongLongLine(t *testing.T) {
 	if len(events) != 2 {
 		t.Errorf("unexpected events count: %d", len(events))
 	}
-	want := strings.Repeat("あ", 87372)
+	want := strings.Repeat("あ", maximumBytesPerEvent/3)
 	if events[0] != want {
 		t.Errorf("unexpected event: %s", events[0])
 	}
@@ -508,13 +494,8 @@ func TestWriter_WriteEventContext_ReplacementChar(t *testing.T) {
 	// "\x80" has 1 bytes (len("\x80") = 1),
 	// however it is replaced by U+FFFD � replacement character,
 	// and U+FFFD has 3 bytes (len("\uFFFD") = 3).
-	// and PutLogEvents can put an event up to 262118 bytes at a time.
-	// (262118 bytes = maximumBytesPerEvent)
-	//
-	// WriteEvent separates the message that has more than 87373 "\x80".
-	// len("\uFFFD") x 87372 = 262116 bytes < 262118 bytes
-	// len("\uFFFD") x 87373 = 262119 bytes > 262118 bytes
-	line := strings.Repeat("\x80", 87373)
+	// and PutLogEvents can put an event up to maximumBytesPerEvent bytes at a time.
+	line := strings.Repeat("\x80", maximumBytesPerEvent/3+1)
 
 	n, err := w.WriteEvent(time.Now(), line)
 	if err != nil {
@@ -528,7 +509,7 @@ func TestWriter_WriteEventContext_ReplacementChar(t *testing.T) {
 	if len(events) != 2 {
 		t.Errorf("unexpected events count: %d", len(events))
 	}
-	want := strings.Repeat("\uFFFD", 87372)
+	want := strings.Repeat("\uFFFD", maximumBytesPerEvent/3)
 	if events[0] != want {
 		t.Errorf("unexpected event: %s", events[0])
 	}

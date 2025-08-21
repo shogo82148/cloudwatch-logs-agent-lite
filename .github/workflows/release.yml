@@ -19,7 +19,7 @@ jobs:
           go-version-file: go.mod
 
       - name: Configure AWS Credentials
-        uses: shogo82148/actions-aws-assume-role@ab8b68ccaa6a83d843cd6f9403fc3c0eb2e3af0c # v1.7.1
+        uses: fuller-inc/actions-aws-assume-role@ab8b68ccaa6a83d843cd6f9403fc3c0eb2e3af0c # v1.7.1
         with:
           aws-region: ap-northeast-1
           role-to-assume: arn:aws:iam::445285296882:role/rpm-repository-users-CloudWatchLogsAgentRole-19MYK77MOJY8B

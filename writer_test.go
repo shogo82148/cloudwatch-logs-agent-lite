@@ -415,8 +415,9 @@ func TestWriter_WriteEventContext(t *testing.T) {
 		logs:          mockCloudWatch,
 	}
 
-	for i := 0; i < maximumLogEventsPerPut; i++ {
-		n, err := w.WriteEventContext(context.Background(), time.Now(), "a")
+	ctx := t.Context()
+	for range maximumLogEventsPerPut {
+		n, err := w.WriteEventContext(ctx, time.Now(), "a")
 		if err != nil {
 			t.Fatal(err)
 		}

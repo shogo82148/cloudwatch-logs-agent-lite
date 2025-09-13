@@ -53,6 +53,7 @@ func TestAgent(t *testing.T) {
 	if err := a.Start(); err != nil {
 		t.Error(err)
 	}
+	defer a.Close()
 
 	// write some log messages and close
 	if _, err := w.WriteString("testtest\n"); err != nil {
@@ -133,7 +134,6 @@ func TestAgent_FlushInterval(t *testing.T) {
 	if err := a.Close(); err != nil {
 		t.Error(err)
 	}
-	a.Wait()
 }
 
 func TestAgent_FlushTimeout(t *testing.T) {
@@ -172,14 +172,11 @@ func TestAgent_FlushTimeout(t *testing.T) {
 		if err := a.Start(); err != nil {
 			t.Error(err)
 		}
+		defer a.Close()
 
 		if _, err := w.WriteString("testtest\n"); err != nil {
 			t.Error(err)
 		}
-
-		// a.Wait() will return without a.Close()
-		// because flushing is failed
-		a.Wait()
 	})
 
 	t.Run("If it succeeds once, the error doesn't stop log forwarding", func(t *testing.T) {

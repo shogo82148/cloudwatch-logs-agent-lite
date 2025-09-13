@@ -32,10 +32,12 @@ type Agent struct {
 	// If zero, flushing is never timeout.
 	FlushTimeout time.Duration
 
-	wg     sync.WaitGroup
-	tails  []*tail.Tail
-	lines  chan *tail.Line
-	errors chan error
+	wgTails        sync.WaitGroup // for waiting all tails are closed
+	wg             sync.WaitGroup // for waiting runForward is finished
+	tails          []*tail.Tail
+	lines          chan *tail.Line
+	errors         chan error
+	closeLinesOnce sync.Once
 
 	closeOnce sync.Once
 	closeErr  error
@@ -66,12 +68,12 @@ func (a *Agent) Start() error {
 			}
 			return err
 		}
-		a.wg.Add(1)
-		go a.runTail(t)
+		a.wgTails.Go(func() {
+			a.runTail(t)
+		})
 		a.tails = append(a.tails, t)
 	}
-	a.wg.Add(1)
-	go a.runForward()
+	a.wg.Go(a.runForward)
 	return nil
 }
 
@@ -92,20 +94,28 @@ func (a *Agent) closeTails() error {
 			}
 		}
 		a.closeErr = ferr
+
+		a.wgTails.Wait()
+		a.closeLines()
 	})
 	return a.closeErr
 }
 
+func (a *Agent) closeLines() {
+	a.closeLinesOnce.Do(func() {
+		close(a.errors)
+		close(a.lines)
+	})
+}
+
 // Wait waits for all readers are closed.
 func (a *Agent) Wait() {
+	a.wgTails.Wait()
+	a.closeLines()
 	a.wg.Wait()
 }
 
 func (a *Agent) runTail(t *tail.Tail) {
-	defer a.wg.Done()
-	defer close(a.errors)
-	defer close(a.lines)
-
 	ticker := time.NewTicker(time.Second)
 	defer ticker.Stop()
 
@@ -138,8 +148,6 @@ func (a *Agent) runTail(t *tail.Tail) {
 }
 
 func (a *Agent) runForward() {
-	defer a.wg.Done()
-
 LOOP1:
 	for {
 		select {

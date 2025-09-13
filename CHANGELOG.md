@@ -1,5 +1,8 @@
 # Changelog
 
+## [v1.2.2](https://github.com/shogo82148/cloudwatch-logs-agent-lite/compare/v1.2.1...v1.2.2) - 2025-09-13
+- fix releasing config by @shogo82148 in https://github.com/shogo82148/cloudwatch-logs-agent-lite/pull/542
+
 ## [v1.2.1](https://github.com/shogo82148/cloudwatch-logs-agent-lite/compare/v1.2.0...v1.2.1) - 2025-09-13
 - build(deps): bump github/codeql-action from 3.29.10 to 3.29.11 by @dependabot[bot] in https://github.com/shogo82148/cloudwatch-logs-agent-lite/pull/527
 - build(deps): bump the aws-sdk group with 4 updates by @dependabot[bot] in https://github.com/shogo82148/cloudwatch-logs-agent-lite/pull/528

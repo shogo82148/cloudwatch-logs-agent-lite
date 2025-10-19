@@ -1,5 +1,13 @@
 # Changelog
 
+## [v1.2.3](https://github.com/shogo82148/cloudwatch-logs-agent-lite/compare/v1.2.2...v1.2.3) - 2025-10-19
+- build(deps): bump Songmu/tagpr from 1.8.0 to 1.9.0 by @dependabot[bot] in https://github.com/shogo82148/cloudwatch-logs-agent-lite/pull/544
+- build(deps): bump the aws-sdk group with 4 updates by @dependabot[bot] in https://github.com/shogo82148/cloudwatch-logs-agent-lite/pull/545
+- build(deps): bump github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs from 1.57.4 to 1.58.0 in the aws-sdk group by @dependabot[bot] in https://github.com/shogo82148/cloudwatch-logs-agent-lite/pull/547
+- build(deps): bump github/codeql-action from 3.30.3 to 4.30.8 by @dependabot[bot] in https://github.com/shogo82148/cloudwatch-logs-agent-lite/pull/554
+- build(deps): bump reviewdog/action-actionlint from 1.67.0 to 1.68.0 by @dependabot[bot] in https://github.com/shogo82148/cloudwatch-logs-agent-lite/pull/555
+- build(deps): bump the aws-sdk group across 1 directory with 4 updates by @dependabot[bot] in https://github.com/shogo82148/cloudwatch-logs-agent-lite/pull/549
+
 ## [v1.2.2](https://github.com/shogo82148/cloudwatch-logs-agent-lite/compare/v1.2.1...v1.2.2) - 2025-09-13
 - fix releasing config by @shogo82148 in https://github.com/shogo82148/cloudwatch-logs-agent-lite/pull/542
 

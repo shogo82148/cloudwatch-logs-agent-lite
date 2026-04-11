@@ -78,6 +78,7 @@ nfpms:
     bindir: /usr/bin
 
 blobs:
+  # Amazon Linux 2
   - provider: s3
     bucket: shogo82148-rpm-temporary
     ids: [package-amd64]
@@ -86,6 +87,8 @@ blobs:
     bucket: shogo82148-rpm-temporary
     ids: [package-arm64]
     directory: amazonlinux/2/aarch64/cloudwatch-logs-agent-lite
+
+  # Amazon Linux 2023
   - provider: s3
     bucket: shogo82148-rpm-temporary
     ids: [package-amd64]
@@ -94,6 +97,8 @@ blobs:
     bucket: shogo82148-rpm-temporary
     ids: [package-arm64]
     directory: amazonlinux/2023/aarch64/cloudwatch-logs-agent-lite
+
+  # CentOS 7
   - provider: s3
     bucket: shogo82148-rpm-temporary
     ids: [package-amd64]
@@ -102,6 +107,8 @@ blobs:
     bucket: shogo82148-rpm-temporary
     ids: [package-arm64]
     directory: centos/7/aarch64/cloudwatch-logs-agent-lite
+
+  # AlmaLinux 8
   - provider: s3
     bucket: shogo82148-rpm-temporary
     ids: [package-amd64]
@@ -110,6 +117,8 @@ blobs:
     bucket: shogo82148-rpm-temporary
     ids: [package-arm64]
     directory: almalinux/8/aarch64/cloudwatch-logs-agent-lite
+
+  # AlmaLinux 9
   - provider: s3
     bucket: shogo82148-rpm-temporary
     ids: [package-amd64]
@@ -118,6 +127,18 @@ blobs:
     bucket: shogo82148-rpm-temporary
     ids: [package-arm64]
     directory: almalinux/9/aarch64/cloudwatch-logs-agent-lite
+
+  # AlmaLinux 10
+  - provider: s3
+    bucket: shogo82148-rpm-temporary
+    ids: [package-amd64]
+    directory: almalinux/10/x86_64/cloudwatch-logs-agent-lite
+  - provider: s3
+    bucket: shogo82148-rpm-temporary
+    ids: [package-arm64]
+    directory: almalinux/10/aarch64/cloudwatch-logs-agent-lite
+
+  # Rocky Linux 8
   - provider: s3
     bucket: shogo82148-rpm-temporary
     ids: [package-amd64]
@@ -126,6 +147,8 @@ blobs:
     bucket: shogo82148-rpm-temporary
     ids: [package-arm64]
     directory: rockylinux/8/aarch64/cloudwatch-logs-agent-lite
+
+  # Rocky Linux 9
   - provider: s3
     bucket: shogo82148-rpm-temporary
     ids: [package-amd64]
@@ -134,3 +157,13 @@ blobs:
     bucket: shogo82148-rpm-temporary
     ids: [package-arm64]
     directory: rockylinux/9/aarch64/cloudwatch-logs-agent-lite
+
+  # Rocky Linux 10
+  - provider: s3
+    bucket: shogo82148-rpm-temporary
+    ids: [package-amd64]
+    directory: rockylinux/10/x86_64/cloudwatch-logs-agent-lite
+  - provider: s3
+    bucket: shogo82148-rpm-temporary
+    ids: [package-arm64]
+    directory: rockylinux/10/aarch64/cloudwatch-logs-agent-lite

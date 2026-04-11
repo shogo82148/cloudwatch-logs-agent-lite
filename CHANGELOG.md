@@ -1,5 +1,28 @@
 # Changelog
 
+## [v1.2.5](https://github.com/shogo82148/cloudwatch-logs-agent-lite/compare/v1.2.4...v1.2.5) - 2026-04-11
+- build(deps): bump shogo82148/actions-github-app-token from 1.0.3 to 1.1.0 by @dependabot[bot] in https://github.com/shogo82148/cloudwatch-logs-agent-lite/pull/572
+- build(deps): bump actions/checkout from 6.0.0 to 6.0.1 by @dependabot[bot] in https://github.com/shogo82148/cloudwatch-logs-agent-lite/pull/573
+- build(deps): bump the aws-sdk group with 4 updates by @dependabot[bot] in https://github.com/shogo82148/cloudwatch-logs-agent-lite/pull/574
+- build(deps): bump github/codeql-action from 4.31.6 to 4.31.10 by @dependabot[bot] in https://github.com/shogo82148/cloudwatch-logs-agent-lite/pull/580
+- build(deps): bump actions/setup-go from 6.1.0 to 6.2.0 by @dependabot[bot] in https://github.com/shogo82148/cloudwatch-logs-agent-lite/pull/581
+- build(deps): bump Songmu/tagpr from 1.9.0 to 1.11.1 by @dependabot[bot] in https://github.com/shogo82148/cloudwatch-logs-agent-lite/pull/582
+- build(deps): bump github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs from 1.62.0 to 1.65.0 by @dependabot[bot] in https://github.com/shogo82148/cloudwatch-logs-agent-lite/pull/590
+- build(deps): bump actions/checkout from 6.0.1 to 6.0.2 by @dependabot[bot] in https://github.com/shogo82148/cloudwatch-logs-agent-lite/pull/584
+- build(deps): bump Songmu/tagpr from 1.11.1 to 1.18.1 by @dependabot[bot] in https://github.com/shogo82148/cloudwatch-logs-agent-lite/pull/593
+- build(deps): bump actions/setup-go from 6.2.0 to 6.4.0 by @dependabot[bot] in https://github.com/shogo82148/cloudwatch-logs-agent-lite/pull/594
+- build(deps): bump shogo82148/actions-github-app-token from 1.1.0 to 1.2.0 by @dependabot[bot] in https://github.com/shogo82148/cloudwatch-logs-agent-lite/pull/596
+- build(deps): bump reviewdog/action-golangci-lint from 2.8.0 to 2.10.0 by @dependabot[bot] in https://github.com/shogo82148/cloudwatch-logs-agent-lite/pull/597
+- build(deps): bump reviewdog/action-actionlint from 1.69.1 to 1.72.0 by @dependabot[bot] in https://github.com/shogo82148/cloudwatch-logs-agent-lite/pull/599
+- build(deps): bump shogo82148/actions-goveralls from 1.10.0 to 1.11.0 by @dependabot[bot] in https://github.com/shogo82148/cloudwatch-logs-agent-lite/pull/598
+- build(deps): bump goreleaser/goreleaser-action from 6.4.0 to 7.0.0 by @dependabot[bot] in https://github.com/shogo82148/cloudwatch-logs-agent-lite/pull/588
+- build(deps): bump the aws-sdk group across 1 directory with 3 updates by @dependabot[bot] in https://github.com/shogo82148/cloudwatch-logs-agent-lite/pull/592
+- migrate AWS native OIDC federation by @shogo82148 in https://github.com/shogo82148/cloudwatch-logs-agent-lite/pull/601
+- bump Go 1.26.2 by @shogo82148 in https://github.com/shogo82148/cloudwatch-logs-agent-lite/pull/600
+- bump github/codeql-action v4.35.1 by @shogo82148 in https://github.com/shogo82148/cloudwatch-logs-agent-lite/pull/602
+- add support for AlmaLinux 10 and Rocky Linux 10 by @shogo82148 in https://github.com/shogo82148/cloudwatch-logs-agent-lite/pull/603
+- drop support of Amazon Linux 2 and CentOS 7 by @shogo82148 in https://github.com/shogo82148/cloudwatch-logs-agent-lite/pull/604
+
 ## [v1.2.4](https://github.com/shogo82148/cloudwatch-logs-agent-lite/compare/v1.2.3...v1.2.4) - 2025-12-02
 - build(deps): bump the aws-sdk group with 4 updates by @dependabot[bot] in https://github.com/shogo82148/cloudwatch-logs-agent-lite/pull/567
 - build(deps): bump reviewdog/action-actionlint from 1.69.0 to 1.69.1 by @dependabot[bot] in https://github.com/shogo82148/cloudwatch-logs-agent-lite/pull/569

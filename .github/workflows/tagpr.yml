@@ -19,7 +19,7 @@ jobs:
     steps:
       - name: generate GitHub App Token
         id: generate
-        uses: shogo82148/actions-github-app-token@94b186c0f90dbc0cc72a3a5f056ca277cb14c3ea # v1.2.0
+        uses: shogo82148/actions-github-app-token@d75b03a80d0450d087a12b72dff2d987a4ced993 # v1.3.0
 
       - name: Check out source code
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2

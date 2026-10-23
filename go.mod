@@ -1,6 +1,8 @@
 module github.com/shogo82148/cloudwatch-logs-agent-lite
 
-go 1.25.1
+go 1.26.0
+
+toolchain go1.27.3
 
 require (
 	github.com/aws/aws-sdk-go-v2 v1.47.3
@@ -10,7 +12,7 @@ require (
 	github.com/google/go-cmp v0.7.0
 	github.com/hashicorp/logutils v1.0.0
 	github.com/shogo82148/go-tail v1.0.2
-	golang.org/x/sys v0.2.0 // indirect
+	golang.org/x/sys v0.44.0 // indirect
 )
 
 require (

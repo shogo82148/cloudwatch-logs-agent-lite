@@ -1,5 +1,16 @@
 # Changelog
 
+## [v1.2.7](https://github.com/shogo82148/cloudwatch-logs-agent-lite/compare/v1.2.6...v1.2.7) - 2026-10-30
+
+- build(deps): bump the aws-sdk group with 4 updates by @dependabot[bot] in https://github.com/shogo82148/cloudwatch-logs-agent-lite/pull/734
+- build(deps): bump Songmu/tagpr from 1.21.3 to 1.21.4 by @dependabot[bot] in https://github.com/shogo82148/cloudwatch-logs-agent-lite/pull/733
+- build(deps): bump the codeql-actions group with 3 updates by @dependabot[bot] in https://github.com/shogo82148/cloudwatch-logs-agent-lite/pull/732
+- build(deps): bump shogo82148/actions-goveralls from 1.11.3 to 1.11.4 by @dependabot[bot] in https://github.com/shogo82148/cloudwatch-logs-agent-lite/pull/731
+- build(deps): bump reviewdog/action-actionlint from 1.80.4 to 1.80.6 by @dependabot[bot] in https://github.com/shogo82148/cloudwatch-logs-agent-lite/pull/730
+- build(deps): bump shogo82148/actions-goveralls from 1.11.4 to 1.11.5 by @dependabot[bot] in https://github.com/shogo82148/cloudwatch-logs-agent-lite/pull/736
+- build(deps): bump shogo82148/actions-github-app-token from 1.3.3 to 1.3.4 by @dependabot[bot] in https://github.com/shogo82148/cloudwatch-logs-agent-lite/pull/737
+- pin GitHub Actions with gh actions-lock by @shogo82148 in https://github.com/shogo82148/cloudwatch-logs-agent-lite/pull/740
+
 ## [v1.2.6](https://github.com/shogo82148/cloudwatch-logs-agent-lite/compare/v1.2.5...v1.2.6) - 2026-10-23
 
 - build(deps): bump Songmu/tagpr from 1.18.1 to 1.18.2 by @dependabot[bot] in https://github.com/shogo82148/cloudwatch-logs-agent-lite/pull/605
